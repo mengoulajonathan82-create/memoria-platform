@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+/*
+ * Palette sobre et chaleureuse. La couleur principale sera personnalisable
+ * depuis les paramètres (Phase 6) en surchargeant --primary.
+ */
+:root {
+  --background: #f7f5f2;
+  --surface: #ffffff;
+  --foreground: #2b2926;
+  --muted: #6b665f;
+  --border: #e3ded6;
+  --primary: #4a5568;
+  --primary-foreground: #ffffff;
+  --danger: #9b2c2c;
+  --success: #2f6b4f;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  --font-serif: Georgia, "Times New Roman", serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Focus clavier toujours visible (accessibilité). */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
