@@ -1,19 +1,41 @@
 @import "tailwindcss";
 
+/* ========================================================================== */
+/* Jetons de couleur                                                          */
+/* ========================================================================== */
+
 /*
- * Palette sobre et chaleureuse. La couleur principale sera personnalisable
- * depuis les paramètres (Phase 6) en surchargeant --primary.
+ * Back-office : thème bleu et blanc, net et rassurant.
+ * Les pages publiques utilisent les jetons --pt-* fournis par le thème choisi
+ * par l'administrateur (voir src/lib/themes.ts).
  */
 :root {
-  --background: #f7f5f2;
+  --background: #f3f6fc;
   --surface: #ffffff;
-  --foreground: #2b2926;
-  --muted: #6b665f;
-  --border: #e3ded6;
-  --primary: #4a5568;
+  --foreground: #0f1b33;
+  --muted: #5b6b86;
+  --border: #dde5f2;
+  --primary: #1d4ed8;
+  --primary-strong: #1e3a8a;
+  --primary-soft: #e8efff;
   --primary-foreground: #ffffff;
-  --danger: #9b2c2c;
-  --success: #2f6b4f;
+  --accent: #0ea5e9;
+  --danger: #b42318;
+  --success: #0f7b4f;
+  --warning: #b45309;
+
+  /* Valeurs publiques par défaut (remplacées par le thème actif). */
+  --pt-bg: #f6f8fc;
+  --pt-bg-2: #eef3fb;
+  --pt-surface: #ffffff;
+  --pt-text: #1c2740;
+  --pt-muted: #5f6b82;
+  --pt-border: #dfe6f1;
+  --pt-accent: #3b5b9a;
+  --pt-accent-fg: #ffffff;
+  --pt-accent-soft: #e6edf9;
+  --pt-glow: rgba(120, 150, 210, 0.35);
+  --pt-flame: #f59e0b;
 }
 
 @theme inline {
@@ -23,12 +45,43 @@
   --color-muted: var(--muted);
   --color-border: var(--border);
   --color-primary: var(--primary);
+  --color-primary-strong: var(--primary-strong);
+  --color-primary-soft: var(--primary-soft);
   --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
   --color-danger: var(--danger);
   --color-success: var(--success);
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
-  --font-serif: Georgia, "Times New Roman", serif;
+  --color-warning: var(--warning);
+
+  --color-pt-bg: var(--pt-bg);
+  --color-pt-bg-2: var(--pt-bg-2);
+  --color-pt-surface: var(--pt-surface);
+  --color-pt-text: var(--pt-text);
+  --color-pt-muted: var(--pt-muted);
+  --color-pt-border: var(--pt-border);
+  --color-pt-accent: var(--pt-accent);
+  --color-pt-accent-fg: var(--pt-accent-fg);
+  --color-pt-accent-soft: var(--pt-accent-soft);
+
+  --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-serif: var(--font-cormorant), Georgia, "Times New Roman", serif;
+
+  --animate-fade-up: fade-up 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-fade-in: fade-in 0.5s ease-out both;
+  --animate-scale-in: scale-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-slide-in: slide-in 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-flicker: flicker 2.6s ease-in-out infinite;
+  --animate-glow: glow 4s ease-in-out infinite;
+  --animate-float: float 14s ease-in-out infinite;
+  --animate-shimmer: shimmer 2.2s linear infinite;
+}
+
+/* ========================================================================== */
+/* Base                                                                       */
+/* ========================================================================== */
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
@@ -36,10 +89,146 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* Focus clavier toujours visible (accessibilité). */
 :focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+/* ========================================================================== */
+/* Animations                                                                 */
+/* ========================================================================== */
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes slide-in {
+  from { opacity: 0; transform: translateX(-16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+/* Flamme de bougie : léger vacillement. */
+@keyframes flicker {
+  0%, 100% { transform: translateX(-50%) scale(1, 1) rotate(-1deg); opacity: 1; }
+  25% { transform: translateX(-50%) scale(0.94, 1.06) rotate(1.5deg); opacity: 0.92; }
+  50% { transform: translateX(-50%) scale(1.04, 0.96) rotate(-2deg); opacity: 1; }
+  75% { transform: translateX(-50%) scale(0.97, 1.04) rotate(1deg); opacity: 0.95; }
+}
+@keyframes glow {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.06); }
+}
+@keyframes float {
+  0%, 100% { transform: translate(0, 0); }
+  33% { transform: translate(18px, -22px); }
+  66% { transform: translate(-14px, 12px); }
+}
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+
+/* Apparition au défilement (composant <Reveal>). */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+[data-reveal].is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Délais échelonnés pour les listes. */
+.stagger > * {
+  animation: var(--animate-fade-up);
+}
+.stagger > *:nth-child(1) { animation-delay: 0.02s; }
+.stagger > *:nth-child(2) { animation-delay: 0.07s; }
+.stagger > *:nth-child(3) { animation-delay: 0.12s; }
+.stagger > *:nth-child(4) { animation-delay: 0.17s; }
+.stagger > *:nth-child(5) { animation-delay: 0.22s; }
+.stagger > *:nth-child(6) { animation-delay: 0.27s; }
+.stagger > *:nth-child(n + 7) { animation-delay: 0.32s; }
+
+/* Respect du réglage système « réduire les animations ». */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ========================================================================== */
+/* Bougie (page publique)                                                     */
+/* ========================================================================== */
+
+.candle {
+  position: relative;
+  width: 14px;
+  height: 34px;
+  margin: 20px auto 0;
+  border-radius: 4px 4px 3px 3px;
+  background: linear-gradient(180deg, #fffaf0, #f3e7cf);
+  box-shadow: inset -3px 0 0 rgba(0, 0, 0, 0.06);
+}
+.candle::before {
+  /* mèche */
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -5px;
+  width: 2px;
+  height: 6px;
+  transform: translateX(-50%);
+  background: #3b2f2a;
+  border-radius: 1px;
+}
+.candle .flame {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 3px);
+  width: 12px;
+  height: 20px;
+  border-radius: 50% 50% 35% 35% / 60% 60% 40% 40%;
+  background: radial-gradient(circle at 50% 70%, #fff7d6 0%, #ffd56a 35%, var(--pt-flame) 70%, transparent 72%);
+  transform-origin: 50% 90%;
+  animation: var(--animate-flicker);
+  filter: drop-shadow(0 0 6px rgba(255, 190, 80, 0.9));
+}
+.candle .halo {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% - 6px);
+  width: 64px;
+  height: 64px;
+  margin-left: -32px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 196, 90, 0.35), transparent 65%);
+  animation: var(--animate-glow);
+  pointer-events: none;
 }

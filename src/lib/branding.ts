@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import type { Database } from "@/lib/db/client";
 import { settings } from "@/lib/db/schema";
+import { DEFAULT_PUBLIC_THEME, PUBLIC_THEME_IDS } from "@/lib/themes";
 
 export const BRANDING_SETTING_KEY = "branding";
 
@@ -14,7 +15,10 @@ export const brandingSchema = z.object({
   companyName: z.string().trim().min(1).max(120),
   /** Chemin dans le stockage protégé ; servi publiquement par la route /logo. */
   logoPath: z.string().regex(/^branding\/logo-[A-Za-z0-9]+\.png$/).nullable(),
-  primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Couleur hexadécimale attendue."),
+  /** Ancien réglage (avant les thèmes). Conservé pour compatibilité, plus utilisé. */
+  primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  /** Thème par défaut des pages commémoratives publiques. */
+  publicTheme: z.enum(PUBLIC_THEME_IDS).catch(DEFAULT_PUBLIC_THEME).default(DEFAULT_PUBLIC_THEME),
   welcomeText: z.string().max(1000),
   footerText: z.string().max(1000),
 });
@@ -24,7 +28,7 @@ export type Branding = z.infer<typeof brandingSchema>;
 export const DEFAULT_BRANDING: Branding = {
   companyName: "Pompes funèbres (exemple)",
   logoPath: null,
-  primaryColor: "#4a5568",
+  publicTheme: DEFAULT_PUBLIC_THEME,
   welcomeText:
     "Pour consulter la page d'un proche, scannez le QR code qui vous a été remis.",
   footerText: "Texte de pied de page à personnaliser.",

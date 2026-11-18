@@ -133,6 +133,7 @@ describe("page publique : confidentialité", () => {
       "mainPhoto",
       "practicalInfo",
       "showGallery",
+      "theme",
     ]);
     const serialized = JSON.stringify(result);
     for (const secret of [SECRET_NOTE, SECRET_FAMILY, SECRET_PHONE, id, actor.userId]) {

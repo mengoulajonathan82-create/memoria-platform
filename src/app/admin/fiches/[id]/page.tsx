@@ -21,6 +21,10 @@ import { getServerEnv } from "@/lib/env";
 import { readFlash } from "@/lib/flash";
 import { buildPublicUrl, generateQrSvg, isLocalOnlyUrl } from "@/lib/qr";
 import { getEntityHistory } from "@/lib/history";
+import { ThemePicker } from "@/components/theme-picker";
+import { getBranding } from "@/lib/branding";
+import { PUBLIC_THEMES } from "@/lib/themes";
+import { Palette } from "lucide-react";
 import { listProfileMedia } from "@/lib/media/service";
 import { getTributeStats } from "@/lib/tributes/service";
 import { getProfile } from "@/lib/profiles/service";
@@ -29,6 +33,7 @@ import {
   type SettableProfileStatus,
 } from "@/lib/validation/profile";
 import {
+  setProfileThemeAction,
   changeProfileStatusAction,
   deleteProfileAction,
   restoreProfileAction,
@@ -65,6 +70,7 @@ export default async function ProfilePage(props: PageProps<"/admin/fiches/[id]">
     listProfileMedia(db, id, "active"),
     getTributeStats(db, id),
   ]);
+  const defaultTheme = (await getBranding(db)).publicTheme;
   const mediaCount = activeMedia.length;
 
   const appUrl = getServerEnv().APP_URL;
@@ -203,6 +209,20 @@ export default async function ProfilePage(props: PageProps<"/admin/fiches/[id]">
               <li>Bougies numériques : {profile.allowCandles ? "autorisées" : "désactivées"}</li>
             </ul>
           </Card>
+
+          {!isDeleted && can("settings.manage") ? (
+            <Card title="Thème de la page publique" icon={<Palette className="size-4" aria-hidden="true" />}>
+              <form action={setProfileThemeAction.bind(null, id)} className="space-y-4">
+                <ThemePicker
+                  name="theme"
+                  defaultValue={profile.theme ?? ""}
+                  allowDefault
+                  defaultLabel={`Actuellement : ${PUBLIC_THEMES[defaultTheme].label}`}
+                />
+                <SubmitButton>Appliquer ce thème</SubmitButton>
+              </form>
+            </Card>
+          ) : null}
 
           <Card title="Notes internes (privé)">
             <p className="text-sm whitespace-pre-line">{profile.internalNotes || "—"}</p>

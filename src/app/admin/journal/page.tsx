@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ScrollText } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
 import { buttonClass, EmptyState, formatDateTime, PageHeader, PaginationNav } from "@/components/ui";
@@ -13,7 +14,7 @@ export const metadata: Metadata = { title: "Journal d'activité" };
 const categoryParam = z.enum(Object.keys(ACTIVITY_CATEGORIES) as [ActivityCategory, ...ActivityCategory[]]).optional().catch(undefined);
 const dateParam = z.iso.date().optional().catch(undefined);
 const uuidParam = z.uuid().optional().catch(undefined);
-const inputClass = "mt-1.5 block w-full rounded-md border border-border bg-surface px-3 py-2";
+const inputClass = "mt-1.5 block w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 shadow-sm transition focus:border-primary focus:ring-4 focus:ring-primary/15 focus:outline-none";
 
 /** Lien vers l'élément concerné, quand il existe dans le back-office. */
 function entityHref(type: string | null, id: string | null): string | null {
@@ -52,7 +53,8 @@ export default async function ActivityPage(props: PageProps<"/admin/journal">) {
 
   return (
     <div>
-      <PageHeader title="Journal d'activité" description="Connexions, créations, modifications, publications, suppressions, modération, paramètres. Les adresses IP sont conservées sous forme hachée uniquement." />
+      <PageHeader title="Journal d'activité"
+        icon={<ScrollText className="size-6" aria-hidden="true" />} description="Connexions, créations, modifications, publications, suppressions, modération, paramètres. Les adresses IP sont conservées sous forme hachée uniquement." />
 
       <form method="get" role="search" className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr_auto] lg:items-end">
         <div>
@@ -80,12 +82,12 @@ export default async function ActivityPage(props: PageProps<"/admin/journal">) {
         <button type="submit" className={buttonClass.secondary}>Filtrer</button>
       </form>
 
-      <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+      <div className="overflow-x-auto rounded-2xl border border-border bg-surface shadow-sm">
         {items.length === 0 ? (
           <EmptyState>Aucune entrée ne correspond à ces critères.</EmptyState>
         ) : (
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-border text-muted">
+            <thead className="border-b border-border bg-primary-soft/50 text-xs tracking-wide text-muted uppercase">
               <tr>
                 <th className="px-4 py-3 font-medium">Date</th>
                 <th className="px-4 py-3 font-medium">Action</th>

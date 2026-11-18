@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CircleUser } from "lucide-react";
 import { Card, DefinitionList, PageHeader } from "@/components/ui";
 import { requireUser } from "@/lib/auth/dal";
 import { PASSWORD_MIN_LENGTH } from "@/lib/auth/password";
@@ -11,7 +12,8 @@ export default async function ProfilePage() {
   const user = await requireUser();
   return (
     <div className="max-w-2xl space-y-6">
-      <PageHeader title="Mon profil" />
+      <PageHeader title="Mon profil"
+        icon={<CircleUser className="size-6" aria-hidden="true" />} />
       <Card title="Mon compte">
         <DefinitionList
           items={[

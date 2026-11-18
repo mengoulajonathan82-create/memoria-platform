@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element -- fichiers servis par une route protégée, déjà optimisés par sharp */
 import type { Metadata } from "next";
+import { Images } from "lucide-react";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { ConfirmSubmitButton, SubmitButton } from "@/components/form";
@@ -67,6 +68,7 @@ export default async function ProfileMediaPage(props: PageProps<"/admin/fiches/[
     <div>
       <PageHeader
         title={`Médias : ${profile.fullName}`}
+        icon={<Images className="size-6" aria-hidden="true" />}
         back={{ href: `/admin/fiches/${id}`, label: profile.fullName }}
         description={
           profile.showGallery
@@ -86,7 +88,7 @@ export default async function ProfileMediaPage(props: PageProps<"/admin/fiches/[
           {items.map((item, index) => {
             const isMain = profile.mainPhotoMediaId === item.id;
             return (
-              <li key={item.id} className="rounded-lg border border-border bg-surface p-3">
+              <li key={item.id} className="rounded-2xl border border-border bg-surface p-3 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
                 <Preview item={item} />
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
                   <span className="rounded bg-background px-2 py-0.5">{TYPE_LABELS[item.type]}</span>

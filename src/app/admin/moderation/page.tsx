@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { MessageSquareHeart } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
 import { ConfirmSubmitButton } from "@/components/form";
@@ -59,6 +60,7 @@ export default async function ModerationPage(props: PageProps<"/admin/moderation
     <div>
       <PageHeader
         title="Modération"
+        icon={<MessageSquareHeart className="size-6" aria-hidden="true" />}
         description="Aucun message n'est publié sans validation. Les bougies sans message sont affichées directement mais peuvent être masquées."
       />
       <FlashBanner {...readFlash(searchParams)} />
@@ -111,7 +113,7 @@ export default async function ModerationPage(props: PageProps<"/admin/moderation
       ) : (
         <ul className="space-y-4">
           {items.map((item) => (
-            <li key={item.id} className="rounded-lg border border-border bg-surface p-5">
+            <li key={item.id} className="rounded-2xl border border-border bg-surface p-5 shadow-sm transition-all duration-300 hover:shadow-md">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="text-sm">
                   <p>

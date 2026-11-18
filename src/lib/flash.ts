@@ -15,6 +15,7 @@ const SUCCESS_MESSAGES = {
   "restaure-media": "Média restauré.",
   modere: "Décision de modération enregistrée.",
   sauvegarde: "Sauvegarde créée.",
+  theme: "Thème de la page mis à jour.",
 } as const;
 
 const ERROR_MESSAGES = {

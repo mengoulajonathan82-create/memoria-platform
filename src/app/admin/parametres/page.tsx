@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Settings } from "lucide-react";
 import { Card, PageHeader } from "@/components/ui";
 import { requirePermission } from "@/lib/auth/dal";
 import { getBranding } from "@/lib/branding";
@@ -15,15 +16,16 @@ export default async function SettingsPage() {
   const [branding, moderation] = await Promise.all([getBranding(db), getModerationSettings(db)]);
 
   return (
-    <div className="max-w-3xl space-y-8">
-      <PageHeader title="Paramètres" description="Personnalisation des pages publiques et règles de modération." />
+    <div className="max-w-5xl space-y-8">
+      <PageHeader title="Paramètres"
+        icon={<Settings className="size-6" aria-hidden="true" />} description="Personnalisation des pages publiques et règles de modération." />
       <Card title="Identité de l'entreprise">
         <BrandingForm
           action={saveBrandingAction}
           hasLogo={Boolean(branding.logoPath)}
           initial={{
             companyName: branding.companyName,
-            primaryColor: branding.primaryColor,
+            publicTheme: branding.publicTheme,
             welcomeText: branding.welcomeText,
             footerText: branding.footerText,
           }}

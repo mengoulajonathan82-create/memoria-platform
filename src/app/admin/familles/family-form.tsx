@@ -64,7 +64,7 @@ export function FamilyForm({ action, initialValues = {}, submitLabel, cancelHref
 
       <div className="flex flex-wrap gap-3">
         <SubmitButton>{submitLabel}</SubmitButton>
-        <Link href={cancelHref} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-surface">
+        <Link href={cancelHref} className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium transition hover:border-primary/40 hover:text-primary">
           Annuler
         </Link>
       </div>

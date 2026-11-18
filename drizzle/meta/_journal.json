@@ -15,6 +15,13 @@
       "when": 1794985128679,
       "tag": "0001_media_variants",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1794989871786,
+      "tag": "0002_profile_theme",
+      "breakpoints": true
     }
   ]
 }

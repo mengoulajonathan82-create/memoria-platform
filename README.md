@@ -383,6 +383,39 @@ modération puis dépublication immédiate, création d'un employé avec mot de 
 provisoire, puis vérification qu'il ne peut accéder ni aux comptes, ni au journal,
 ni aux paramètres, ni à l'export.
 
+## Design, thèmes et animations
+
+**Back-office** : thème bleu et blanc — barre latérale bleue (menu coulissant sur
+téléphone), tableau de bord avec bandeau d'accueil, raccourcis et indicateurs
+animés, cartes et tableaux arrondis, frise d'historique. Polices Inter (texte)
+et Cormorant Garamond (titres), auto-hébergées.
+
+**Pages publiques** : l'administrateur choisit le thème que voient les visiteurs
+en scannant le QR code :
+
+- **Paramètres → Thème des pages commémoratives** : thème par défaut, avec aperçus ;
+  lien « Voir un exemple de page » (`/apercu-theme`, page fictive, administrateurs).
+- **Fiche → Thème de la page publique** : thème propre à une fiche (ou « par défaut »).
+
+| Thème | Ambiance |
+|---|---|
+| Sérénité (défaut) | bleu ciel apaisant et blanc |
+| Lavande | mauve doux |
+| Sauge | vert naturel |
+| Sable doré | beige chaleureux, touches dorées |
+| Rose poudré | rose léger |
+| Ardoise | gris élégant, très sobre |
+| Nuit étoilée | bleu nuit et lueurs dorées (thème sombre, ciel étoilé discret) |
+
+Tous les thèmes respectent les contrastes WCAG AA (vérifiés par les tests). Seul
+l'identifiant du thème est stocké : aucune couleur libre n'est injectée dans la page.
+
+**Animations** : apparitions en fondu à l'ouverture et au défilement, halo
+autour du portrait, bougies dont la flamme vacille, galerie avec zoom et
+visionneuse plein écran (flèches, clavier, glissement du doigt), boutons et
+cartes qui réagissent au survol, compteurs animés. Toutes les animations sont
+désactivées si l'appareil demande à « réduire les animations ».
+
 ## Sécurité mise en place (Phase 1)
 
 - **Mots de passe** hachés en Argon2id ; jamais stockés ni journalisés en clair.
@@ -407,7 +440,7 @@ ni aux paramètres, ni à l'export.
 npm test
 ```
 
-109 tests unitaires et d'intégration (`npm test`) couvrent :
+121 tests unitaires et d'intégration (`npm test`) couvrent :
 
 - **Phase 1** : hachage et vérification des mots de passe, politique de mot de
   passe, identifiants publics, jetons et hachage d'IP, matrice des permissions,
@@ -440,6 +473,9 @@ npm test
   formules, données exclues), contraste, logo (ré-encodage, remplacement, refus d'un faux
   fichier), mots interdits configurables, sauvegarde + restauration complète, refus d'une
   sauvegarde corrompue sans toucher aux données, noms de sauvegarde dangereux.
+- **Thèmes** : contrastes WCAG des 7 thèmes, résolution fiche → paramètres → défaut,
+  refus d'identifiants piégés (`constructor`, `__proto__`), compatibilité avec les
+  anciens réglages, thème par fiche exposé à la page publique.
 
 Plus 7 tests de parcours Playwright (voir ci-dessus).
 

@@ -82,7 +82,7 @@ export function ProfileForm({
         />
       </fieldset>
 
-      <fieldset className="space-y-3 rounded-lg border border-border bg-surface p-5">
+      <fieldset className="space-y-3 rounded-2xl border border-border bg-surface p-5 shadow-sm transition-all duration-300 hover:shadow-md">
         <legend className="px-1 font-medium">Visibilité sur la page publique</legend>
         <p className="text-sm text-muted">
           Seuls les éléments cochés seront affichés une fois la fiche publiée. Le nom et la photo
@@ -112,7 +112,7 @@ export function ProfileForm({
 
       <div className="flex flex-wrap gap-3">
         <SubmitButton>{submitLabel}</SubmitButton>
-        <Link href={cancelHref} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-surface">
+        <Link href={cancelHref} className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium transition hover:border-primary/40 hover:text-primary">
           Annuler
         </Link>
       </div>

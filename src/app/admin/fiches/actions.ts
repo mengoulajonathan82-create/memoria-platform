@@ -13,9 +13,11 @@ import {
   createProfile,
   getProfile,
   restoreProfile,
+  setProfileTheme,
   softDeleteProfile,
   updateProfile,
 } from "@/lib/profiles/service";
+import { isPublicThemeId } from "@/lib/themes";
 import { fieldErrorsOf, formDataToObject } from "@/lib/validation/common";
 import { profileSchema, profileStatusSchema, type ProfileInput } from "@/lib/validation/profile";
 
@@ -109,4 +111,15 @@ export async function restoreProfileAction(id: string): Promise<void> {
   if (!idSchema.safeParse(id).success) redirect("/admin/fiches?erreur=introuvable");
   const ok = await restoreProfile(await getDb(), id, actor);
   redirect(ok ? `/admin/fiches/${id}?ok=restaure` : "/admin/fiches?erreur=introuvable");
+}
+
+/** Thème de la page publique d'une fiche (administrateurs : permission « settings.manage »). */
+export async function setProfileThemeAction(id: string, formData: FormData): Promise<void> {
+  const { actor } = await requireActor("settings.manage");
+  if (!idSchema.safeParse(id).success) redirect("/admin/fiches?erreur=introuvable");
+  const raw = formData.get("theme");
+  const theme = raw === "" ? null : isPublicThemeId(raw) ? raw : undefined;
+  if (theme === undefined) redirect(`/admin/fiches/${id}?erreur=statut-invalide`);
+  const ok = await setProfileTheme(await getDb(), id, theme, actor);
+  redirect(`/admin/fiches/${id}?${ok ? "ok=theme" : "erreur=introuvable"}`);
 }

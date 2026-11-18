@@ -214,6 +214,8 @@ export const deceasedProfiles = sqliteTable(
     allowCandles: integer("allow_candles", { mode: "boolean" })
       .notNull()
       .default(true),
+    /** Thème visuel de la page publique (null = thème par défaut des paramètres). */
+    theme: text("theme"),
 
     // --- Champs PRIVÉS ---
     internalNotes: text("internal_notes"),

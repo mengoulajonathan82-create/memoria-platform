@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Database } from "lucide-react";
 import { SubmitButton } from "@/components/form";
 import { buttonClass, Card, FlashBanner, formatDateTime, PageHeader } from "@/components/ui";
 import { requireUser } from "@/lib/auth/dal";
@@ -28,7 +29,8 @@ export default async function DataPage(props: PageProps<"/admin/donnees">) {
 
   return (
     <div className="max-w-3xl space-y-8">
-      <PageHeader title="Données" description="Export de données non sensibles et sauvegardes locales." />
+      <PageHeader title="Données"
+        icon={<Database className="size-6" aria-hidden="true" />} description="Export de données non sensibles et sauvegardes locales." />
       <FlashBanner {...readFlash(searchParams)} />
 
       {canExport ? (
@@ -59,7 +61,7 @@ export default async function DataPage(props: PageProps<"/admin/donnees">) {
 
           {backups.length ? (
             <table className="mt-6 w-full text-left text-sm">
-              <thead className="border-b border-border text-muted">
+              <thead className="border-b border-border bg-primary-soft/50 text-xs tracking-wide text-muted uppercase">
                 <tr>
                   <th className="py-2 font-medium">Sauvegarde</th>
                   <th className="py-2 font-medium">Date</th>

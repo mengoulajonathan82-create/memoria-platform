@@ -13,7 +13,7 @@ export function LoginForm() {
       {state.error ? (
         <p
           role="alert"
-          className="rounded-md border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger"
+          className="animate-scale-in rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-danger"
         >
           {state.error}
         </p>
@@ -30,7 +30,7 @@ export function LoginForm() {
           autoComplete="username"
           required
           defaultValue={state.email}
-          className="mt-1.5 block w-full rounded-md border border-border bg-surface px-3 py-2.5 text-base shadow-sm"
+          className="mt-1.5 block w-full rounded-xl border border-border bg-surface px-3.5 py-3 text-base shadow-sm transition-all duration-200 hover:border-primary/40 focus:border-primary focus:ring-4 focus:ring-primary/15 focus:outline-none"
         />
       </div>
 
@@ -44,14 +44,14 @@ export function LoginForm() {
           type="password"
           autoComplete="current-password"
           required
-          className="mt-1.5 block w-full rounded-md border border-border bg-surface px-3 py-2.5 text-base shadow-sm"
+          className="mt-1.5 block w-full rounded-xl border border-border bg-surface px-3.5 py-3 text-base shadow-sm transition-all duration-200 hover:border-primary/40 focus:border-primary focus:ring-4 focus:ring-primary/15 focus:outline-none"
         />
       </div>
 
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-md bg-primary px-4 py-2.5 font-medium text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-[#2563eb] px-4 py-3 font-semibold text-primary-foreground shadow-lg shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl active:scale-[0.98] disabled:opacity-60"
       >
         {pending ? "Connexion…" : "Se connecter"}
       </button>

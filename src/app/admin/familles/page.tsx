@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Users } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
 import {
@@ -35,6 +36,7 @@ export default async function FamiliesPage(props: PageProps<"/admin/familles">) 
     <div>
       <PageHeader
         title="Familles"
+        icon={<Users className="size-6" aria-hidden="true" />}
         description="Données privées, visibles uniquement par le personnel."
         actions={
           <Link href="/admin/familles/nouvelle" className={buttonClass.primary}>
@@ -48,12 +50,12 @@ export default async function FamiliesPage(props: PageProps<"/admin/familles">) 
         <div className="min-w-48 flex-1">
           <label htmlFor="q" className="block text-sm font-medium">Rechercher</label>
           <input id="q" name="q" type="search" defaultValue={q} placeholder="Nom de famille ou contact"
-            className="mt-1.5 block w-full rounded-md border border-border bg-surface px-3 py-2" />
+            className="mt-1.5 block w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 shadow-sm transition focus:border-primary focus:ring-4 focus:ring-primary/15 focus:outline-none" />
         </div>
         <div>
           <label htmlFor="statut" className="block text-sm font-medium">Statut</label>
           <select id="statut" name="statut" defaultValue={status ?? ""}
-            className="mt-1.5 block rounded-md border border-border bg-surface px-3 py-2">
+            className="mt-1.5 block rounded-xl border border-border bg-surface px-3.5 py-2.5 shadow-sm transition focus:border-primary focus:ring-4 focus:ring-primary/15 focus:outline-none">
             <option value="">Tous</option>
             {FAMILY_STATUSES.map((s) => <option key={s} value={s}>{FAMILY_STATUS_LABELS[s]}</option>)}
           </select>
@@ -61,12 +63,12 @@ export default async function FamiliesPage(props: PageProps<"/admin/familles">) 
         <button type="submit" className={buttonClass.secondary}>Filtrer</button>
       </form>
 
-      <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+      <div className="overflow-x-auto rounded-2xl border border-border bg-surface shadow-sm">
         {items.length === 0 ? (
           <EmptyState>Aucune famille ne correspond à ces critères.</EmptyState>
         ) : (
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-border text-muted">
+            <thead className="border-b border-border bg-primary-soft/50 text-xs tracking-wide text-muted uppercase">
               <tr>
                 <th className="px-4 py-3 font-medium">Famille</th>
                 <th className="px-4 py-3 font-medium">Contact</th>
@@ -77,7 +79,7 @@ export default async function FamiliesPage(props: PageProps<"/admin/familles">) 
             </thead>
             <tbody className="divide-y divide-border">
               {items.map((f) => (
-                <tr key={f.id} className="hover:bg-background">
+                <tr key={f.id} className="transition-colors hover:bg-primary-soft/40">
                   <td className="px-4 py-3">
                     <Link href={`/admin/familles/${f.id}`} className="font-medium underline-offset-4 hover:underline">
                       {f.name}

@@ -1,0 +1,1 @@
+ALTER TABLE `deceased_profiles` ADD `theme` text;

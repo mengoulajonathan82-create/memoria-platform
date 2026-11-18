@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { UserCog } from "lucide-react";
 import Link from "next/link";
 import { Card, FlashBanner, formatDateTime, PageHeader, StatusBadge } from "@/components/ui";
 import { requirePermission } from "@/lib/auth/dal";
@@ -18,12 +19,13 @@ export default async function EmployeesPage(props: PageProps<"/admin/employes">)
 
   return (
     <div className="space-y-8">
-      <PageHeader title="Comptes du personnel" description="Créer, modifier, désactiver ou supprimer des comptes." />
+      <PageHeader title="Comptes du personnel"
+        icon={<UserCog className="size-6" aria-hidden="true" />} description="Créer, modifier, désactiver ou supprimer des comptes." />
       <FlashBanner {...readFlash(searchParams)} />
 
-      <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+      <div className="overflow-x-auto rounded-2xl border border-border bg-surface shadow-sm">
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-border text-muted">
+          <thead className="border-b border-border bg-primary-soft/50 text-xs tracking-wide text-muted uppercase">
             <tr>
               <th className="px-4 py-3 font-medium">Nom</th>
               <th className="px-4 py-3 font-medium">E-mail</th>
@@ -34,7 +36,7 @@ export default async function EmployeesPage(props: PageProps<"/admin/employes">)
           </thead>
           <tbody className="divide-y divide-border">
             {accounts.map((a) => (
-              <tr key={a.id} className="hover:bg-background">
+              <tr key={a.id} className="transition-colors hover:bg-primary-soft/40">
                 <td className="px-4 py-3">
                   <Link href={`/admin/employes/${a.id}`} className="font-medium underline-offset-4 hover:underline">
                     {a.name}

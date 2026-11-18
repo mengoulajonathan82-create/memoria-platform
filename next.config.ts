@@ -25,6 +25,9 @@ const nextConfig: NextConfig = {
   },
   serverExternalPackages: ["@libsql/client", "libsql", "@node-rs/argon2", "sharp"],
   turbopack: {
+    // Le dossier parent contient un autre projet (avec son package-lock.json) :
+    // on fixe explicitement la racine pour éviter toute confusion de Turbopack.
+    root: process.cwd(),
     rules: {
       "*.css": {
         loaders: ["@tailwindcss/turbopack"],

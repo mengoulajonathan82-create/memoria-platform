@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 
 const inputClass =
-  "mt-1.5 block w-full rounded-md border bg-surface px-3 py-2 text-base shadow-sm aria-[invalid=true]:border-danger border-border";
+  "mt-1.5 block w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-base text-foreground shadow-sm transition-all duration-200 placeholder:text-muted/70 hover:border-primary/40 focus:border-primary focus:ring-4 focus:ring-primary/15 focus:outline-none aria-[invalid=true]:border-danger aria-[invalid=true]:ring-4 aria-[invalid=true]:ring-red-500/10";
 
 interface BaseFieldProps {
   name: string;
@@ -145,7 +145,7 @@ export function CheckboxField({
         name={name}
         type="checkbox"
         defaultChecked={defaultChecked}
-        className="mt-1 size-4 accent-primary"
+        className="mt-0.5 size-[18px] cursor-pointer rounded accent-primary"
       />
       <label htmlFor={name} className="text-sm">
         {label}
@@ -166,17 +166,26 @@ export function SubmitButton({
 }) {
   const { pending } = useFormStatus();
   const styles = {
-    primary: "bg-primary text-primary-foreground hover:opacity-90",
-    danger: "bg-danger text-white hover:opacity-90",
-    secondary: "border border-border bg-surface hover:bg-background",
+    primary:
+      "bg-primary text-primary-foreground shadow-md shadow-primary/25 hover:-translate-y-0.5 hover:shadow-lg hover:brightness-110",
+    danger: "bg-danger text-white shadow-md shadow-red-600/20 hover:-translate-y-0.5 hover:brightness-110",
+    secondary:
+      "border border-border bg-surface text-foreground shadow-sm hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary",
   }[variant];
   return (
     <button
       type="submit"
       disabled={pending}
-      className={`rounded-md px-4 py-2 text-sm font-medium transition disabled:opacity-60 ${styles}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.97] disabled:translate-y-0 disabled:opacity-60 ${styles}`}
     >
-      {pending ? pendingLabel : children}
+      {pending ? (
+        <>
+          <span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true" />
+          {pendingLabel}
+        </>
+      ) : (
+        children
+      )}
     </button>
   );
 }
@@ -194,8 +203,8 @@ export function ConfirmSubmitButton({
   const { pending } = useFormStatus();
   const styles =
     variant === "danger"
-      ? "border border-danger/40 text-danger hover:bg-danger/5"
-      : "border border-border bg-surface hover:bg-background";
+      ? "border border-red-200 bg-surface text-danger hover:border-danger hover:bg-red-50"
+      : "border border-border bg-surface text-foreground hover:border-primary/40 hover:text-primary";
   return (
     <button
       type="submit"
@@ -203,7 +212,7 @@ export function ConfirmSubmitButton({
       onClick={(event) => {
         if (!window.confirm(message)) event.preventDefault();
       }}
-      className={`rounded-md px-3 py-1.5 text-sm transition disabled:opacity-60 ${styles}`}
+      className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-medium shadow-sm transition-all duration-200 active:scale-[0.97] disabled:opacity-60 ${styles}`}
     >
       {children}
     </button>
@@ -215,7 +224,7 @@ export function FormMessage({ message }: { message?: string }) {
   return (
     <p
       role="alert"
-      className="rounded-md border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger"
+      className="animate-scale-in rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-danger"
     >
       {message}
     </p>

@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { FormMessage, SubmitButton } from "@/components/form";
 import { changePasswordAction, type PasswordFormState } from "./actions";
 
-const inputClass = "mt-1.5 block w-full rounded-md border border-border bg-surface px-3 py-2";
+const inputClass = "mt-1.5 block w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 shadow-sm transition focus:border-primary focus:ring-4 focus:ring-primary/15 focus:outline-none";
 
 function PasswordField({ name, label, autoComplete, errors, hint }: { name: string; label: string; autoComplete: string; errors?: string[]; hint?: string }) {
   return (

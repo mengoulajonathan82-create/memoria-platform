@@ -14,6 +14,7 @@ import { settings } from "@/lib/db/schema";
 import { detectFileType } from "@/lib/media/detect";
 import type { MediaStorage } from "@/lib/media/storage";
 import { generatePublicId } from "@/lib/security/crypto";
+import { PUBLIC_THEME_IDS } from "@/lib/themes";
 import { FORBIDDEN_WORDS } from "@/lib/tributes/spam";
 
 export const MODERATION_SETTING_KEY = "moderation";
@@ -28,9 +29,15 @@ function luminance(hex: string): number {
   return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
 }
 
+/** Rapport de contraste WCAG entre deux couleurs #RRGGBB. */
+export function contrastRatio(a: string, b: string): number {
+  const [l1, l2] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (l1! + 0.05) / (l2! + 0.05);
+}
+
 /** Rapport de contraste WCAG entre une couleur et le blanc. */
 export function contrastWithWhite(hex: string): number {
-  return 1.05 / (luminance(hex) + 0.05);
+  return contrastRatio(hex, "#ffffff");
 }
 
 /* -------------------------------------------------------------------------- */
@@ -39,10 +46,7 @@ export function contrastWithWhite(hex: string): number {
 
 export const brandingFormSchema = z.object({
   companyName: z.preprocess((v) => v ?? "", z.string().trim().min(1, "Le nom est obligatoire.").max(120)),
-  primaryColor: z
-    .string()
-    .regex(/^#[0-9a-fA-F]{6}$/, "Couleur invalide.")
-    .refine((c) => contrastWithWhite(c) >= 4.5, "Couleur trop claire : le texte blanc des boutons serait illisible."),
+  publicTheme: z.enum(PUBLIC_THEME_IDS, "Thème inconnu."),
   welcomeText: z.preprocess((v) => v ?? "", z.string().trim().max(1000, "1000 caractères maximum.")),
   footerText: z.preprocess((v) => v ?? "", z.string().trim().max(1000, "1000 caractères maximum.")),
 });

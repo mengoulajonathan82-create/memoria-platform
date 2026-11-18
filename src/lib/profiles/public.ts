@@ -12,6 +12,7 @@ import { and, asc, eq } from "drizzle-orm";
 import type { Database } from "@/lib/db/client";
 import { deceasedProfiles, media } from "@/lib/db/schema";
 import { isValidPublicId } from "@/lib/security/crypto";
+import { isPublicThemeId, type PublicThemeId } from "@/lib/themes";
 import {
   getPublicCandles,
   listPublicCondolences,
@@ -46,6 +47,8 @@ export interface PublicMediaItem {
 /** Données pouvant être affichées publiquement. Rien d'autre ne doit y figurer. */
 export interface PublicProfile {
   fullName: string;
+  /** Thème propre à la fiche (null = thème par défaut des paramètres). */
+  theme: PublicThemeId | null;
   mainPhoto: PublicPhoto | null;
   gallery: PublicMediaItem[];
   birthDate: string | null;
@@ -79,6 +82,7 @@ export async function getPublicProfile(
       // Utilisé uniquement pour charger les médias ; jamais renvoyé.
       internalId: deceasedProfiles.id,
       mainPhotoMediaId: deceasedProfiles.mainPhotoMediaId,
+      theme: deceasedProfiles.theme,
       status: deceasedProfiles.status,
       fullName: deceasedProfiles.fullName,
       birthDate: deceasedProfiles.birthDate,
@@ -150,6 +154,7 @@ export async function getPublicProfile(
     kind: "published",
     profile: {
       fullName: row.fullName,
+      theme: isPublicThemeId(row.theme) ? row.theme : null,
       mainPhoto: main ? { url: mediaUrl(main.publicKey), width: main.width, height: main.height } : null,
       gallery,
       birthDate: row.showDates ? row.birthDate : null,

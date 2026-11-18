@@ -22,6 +22,7 @@ import {
   type Pagination,
 } from "@/lib/query-utils";
 import { generatePublicId } from "@/lib/security/crypto";
+import type { PublicThemeId } from "@/lib/themes";
 import type { ProfileInput, SettableProfileStatus } from "@/lib/validation/profile";
 
 export interface ProfileListFilters {
@@ -195,6 +196,27 @@ export async function changeProfileStatus(
     ipHash: actor.ipHash,
   });
   return { ok: true, from: existing.status, to };
+}
+
+/** Thème de la page publique (null = thème par défaut des paramètres). */
+export async function setProfileTheme(
+  db: Database,
+  id: string,
+  theme: PublicThemeId | null,
+  actor: Actor,
+): Promise<boolean> {
+  const existing = await getProfile(db, id);
+  if (!existing || existing.status === "deleted") return false;
+  await db.update(deceasedProfiles).set({ theme, updatedById: actor.userId }).where(eq(deceasedProfiles.id, id));
+  await logActivity(db, {
+    userId: actor.userId,
+    action: "profile.update",
+    entityType: "profile",
+    entityId: id,
+    details: { fields: "theme" },
+    ipHash: actor.ipHash,
+  });
+  return true;
 }
 
 /** Suppression LOGIQUE : la fiche n'est plus visible nulle part mais reste restaurable. */

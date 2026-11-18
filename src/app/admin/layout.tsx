@@ -1,24 +1,17 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { LogOut } from "lucide-react";
 import { requireUser } from "@/lib/auth/dal";
 import { hasPermission, ROLE_LABELS, type Permission } from "@/lib/auth/permissions";
 import { getDb } from "@/lib/db";
 import { countPending } from "@/lib/tributes/service";
 import { logoutAction } from "./actions";
+import { AdminMobileBar, AdminSidebar, type NavEntry } from "./admin-nav";
 
 export const metadata: Metadata = {
   title: { default: "Back-office", template: "%s — Memoria" },
 };
 
-interface NavItem {
-  href: string;
-  label: string;
-  permission: Permission;
-  /** Section prévue dans une phase ultérieure (affichée désactivée). */
-  upcoming?: string;
-}
-
-const NAV_ITEMS: NavItem[] = [
+const NAV_ITEMS: (NavEntry & { permission: Permission })[] = [
   { href: "/admin", label: "Tableau de bord", permission: "dashboard.view" },
   { href: "/admin/familles", label: "Familles", permission: "families.manage" },
   { href: "/admin/fiches", label: "Fiches défunts", permission: "profiles.manage" },
@@ -30,71 +23,54 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/profil", label: "Mon profil", permission: "dashboard.view" },
 ];
 
+function initials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]!.toUpperCase())
+    .join("");
+}
+
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   // Garde serveur : toute page sous /admin exige une session valide.
   const user = await requireUser();
-  const items = NAV_ITEMS.filter((item) => hasPermission(user.role, item.permission));
   const pendingModeration = hasPermission(user.role, "moderation.manage")
     ? await countPending(await getDb())
     : 0;
+  const items: NavEntry[] = NAV_ITEMS.filter((item) => hasPermission(user.role, item.permission)).map(
+    ({ href, label }) => ({ href, label, badge: href === "/admin/moderation" ? pendingModeration : undefined }),
+  );
+
+  const userCard = (
+    <div className="flex items-center gap-3">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white text-sm font-semibold text-primary-strong">
+        {initials(user.name)}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium text-white">{user.name}</p>
+        <p className="text-xs text-blue-200">{ROLE_LABELS[user.role]}</p>
+      </div>
+      <form action={logoutAction}>
+        <button
+          type="submit"
+          className="rounded-lg p-2 text-blue-100 transition hover:bg-white/10 hover:text-white"
+          aria-label="Se déconnecter"
+          title="Se déconnecter"
+        >
+          <LogOut className="size-[18px]" aria-hidden="true" />
+        </button>
+      </form>
+    </div>
+  );
 
   return (
-    <div className="flex min-h-full flex-1 flex-col">
-      <header className="border-b border-border bg-surface print:hidden">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <Link href="/admin" className="font-serif text-lg">
-            Memoria
-          </Link>
-          <div className="flex items-center gap-4 text-sm">
-            <span className="text-muted">
-              {user.name}{" "}
-              <span className="rounded bg-background px-2 py-0.5 text-xs">
-                {ROLE_LABELS[user.role]}
-              </span>
-            </span>
-            <form action={logoutAction}>
-              <button
-                type="submit"
-                className="rounded-md border border-border px-3 py-1.5 hover:bg-background"
-              >
-                Se déconnecter
-              </button>
-            </form>
-          </div>
-        </div>
-        <nav aria-label="Navigation du back-office" className="mx-auto max-w-6xl px-4 sm:px-6">
-          <ul className="flex gap-1 overflow-x-auto pb-2 text-sm">
-            {items.map((item) => (
-              <li key={item.href}>
-                {item.upcoming ? (
-                  <span
-                    className="block cursor-not-allowed rounded-md px-3 py-1.5 whitespace-nowrap text-muted/70"
-                    title={`Disponible en ${item.upcoming}`}
-                  >
-                    {item.label}
-                  </span>
-                ) : (
-                  <Link
-                    href={item.href}
-                    className="block rounded-md px-3 py-1.5 whitespace-nowrap hover:bg-background"
-                  >
-                    {item.label}
-                    {item.href === "/admin/moderation" && pendingModeration > 0 ? (
-                      <span
-                        className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-xs text-amber-800"
-                        aria-label={`${pendingModeration} en attente`}
-                      >
-                        {pendingModeration}
-                      </span>
-                    ) : null}
-                  </Link>
-                )}
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </header>
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">{children}</main>
+    <div className="flex min-h-dvh flex-1 flex-col bg-background lg:flex-row">
+      <AdminSidebar items={items} footer={userCard} />
+      <AdminMobileBar items={items} footer={userCard} />
+      <main className="min-w-0 flex-1 px-4 py-6 sm:px-8 sm:py-8 lg:px-10">
+        <div className="mx-auto w-full max-w-6xl">{children}</div>
+      </main>
     </div>
   );
 }

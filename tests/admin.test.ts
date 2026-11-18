@@ -194,7 +194,7 @@ describe("paramètres", () => {
     await rm(dir, { recursive: true, force: true });
   });
 
-  const brandingInput = { companyName: "PF Martin", primaryColor: "#2f4858", welcomeText: "Bienvenue", footerText: "1 rue X" };
+  const brandingInput = { companyName: "PF Martin", publicTheme: "sauge" as const, welcomeText: "Bienvenue", footerText: "1 rue X" };
 
   it("vérifie le contraste de la couleur principale", () => {
     expect(contrastWithWhite("#000000")).toBeCloseTo(21, 0);
@@ -208,7 +208,7 @@ describe("paramètres", () => {
 
     expect(await saveBranding(conn.db, storage, brandingInput, { kind: "replace", bytes: png }, actor)).toEqual({ ok: true });
     const first = await getBranding(conn.db);
-    expect(first).toMatchObject({ companyName: "PF Martin", primaryColor: "#2f4858" });
+    expect(first).toMatchObject({ companyName: "PF Martin", publicTheme: "sauge" });
     expect(first.logoPath).toMatch(/^branding\/logo-/);
     const meta = await sharp(await storage.read(first.logoPath!)).metadata();
     expect(meta.width).toBeLessThanOrEqual(400);

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BookHeart } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
 import {
@@ -24,7 +25,7 @@ export const metadata: Metadata = { title: "Fiches défunts" };
 
 const isoDateParam = z.iso.date().optional().catch(undefined);
 const uuidParam = z.uuid().optional().catch(undefined);
-const inputClass = "mt-1.5 block w-full rounded-md border border-border bg-surface px-3 py-2";
+const inputClass = "mt-1.5 block w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 shadow-sm transition focus:border-primary focus:ring-4 focus:ring-primary/15 focus:outline-none";
 
 export default async function ProfilesPage(props: PageProps<"/admin/fiches">) {
   await requirePermission("profiles.manage");
@@ -46,6 +47,7 @@ export default async function ProfilesPage(props: PageProps<"/admin/fiches">) {
     <div>
       <PageHeader
         title="Fiches défunts"
+        icon={<BookHeart className="size-6" aria-hidden="true" />}
         actions={
           <Link href="/admin/fiches/nouvelle" className={buttonClass.primary}>
             Nouvelle fiche
@@ -84,12 +86,12 @@ export default async function ProfilesPage(props: PageProps<"/admin/fiches">) {
         <button type="submit" className={buttonClass.secondary}>Filtrer</button>
       </form>
 
-      <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+      <div className="overflow-x-auto rounded-2xl border border-border bg-surface shadow-sm">
         {items.length === 0 ? (
           <EmptyState>Aucune fiche ne correspond à ces critères.</EmptyState>
         ) : (
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-border text-muted">
+            <thead className="border-b border-border bg-primary-soft/50 text-xs tracking-wide text-muted uppercase">
               <tr>
                 <th className="px-4 py-3 font-medium">Nom</th>
                 <th className="px-4 py-3 font-medium">Décès</th>
@@ -100,7 +102,7 @@ export default async function ProfilesPage(props: PageProps<"/admin/fiches">) {
             </thead>
             <tbody className="divide-y divide-border">
               {items.map((p) => (
-                <tr key={p.id} className="hover:bg-background">
+                <tr key={p.id} className="transition-colors hover:bg-primary-soft/40">
                   <td className="px-4 py-3">
                     <Link href={`/admin/fiches/${p.id}`} className="font-medium underline-offset-4 hover:underline">
                       {p.fullName}
