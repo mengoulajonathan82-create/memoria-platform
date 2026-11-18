@@ -14,10 +14,14 @@ export type ActivityAction =
   | "user.disable"
   | "family.create"
   | "family.update"
+  | "family.delete"
   | "profile.create"
   | "profile.update"
+  | "profile.status"
   | "profile.publish"
   | "profile.unpublish"
+  | "profile.delete"
+  | "profile.restore"
   | "moderation.update";
 
 export const ACTIVITY_LABELS: Record<ActivityAction, string> = {
@@ -29,10 +33,14 @@ export const ACTIVITY_LABELS: Record<ActivityAction, string> = {
   "user.disable": "Désactivation d'un compte",
   "family.create": "Création d'une famille",
   "family.update": "Modification d'une famille",
+  "family.delete": "Suppression d'une famille",
   "profile.create": "Création d'une fiche",
   "profile.update": "Modification d'une fiche",
+  "profile.status": "Changement de statut d'une fiche",
   "profile.publish": "Publication d'une fiche",
   "profile.unpublish": "Dépublication d'une fiche",
+  "profile.delete": "Suppression d'une fiche",
+  "profile.restore": "Restauration d'une fiche",
   "moderation.update": "Modération",
 };
 

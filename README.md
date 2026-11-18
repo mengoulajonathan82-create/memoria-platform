@@ -14,7 +14,7 @@ des pages commémoratives accessibles par QR code permanent.
 | Phase | Contenu | État |
 |---|---|---|
 | 1 — Fondations | Next.js, base SQLite + migrations, authentification, rôles, connexion, tableau de bord, comptes de test | ✅ Terminée |
-| 2 — Familles et fiches | CRUD, validation, statuts, recherche, journal | À venir |
+| 2 — Familles et fiches | CRUD, validation, statuts, recherche, filtres, pagination, historique | ✅ Terminée |
 | 3 — QR codes et page publique | URL stable, QR PNG/SVG, page publique, dépublication | À venir |
 | 4 — Médias | Téléversement sécurisé, galerie, corbeille | À venir |
 | 5 — Condoléances et bougies | Formulaires publics, modération, anti-spam | À venir |
@@ -51,6 +51,16 @@ npm run dev        # http://localhost:3000
 Ces comptes sont réservés au développement local (le seed refuse de s'exécuter
 avec `NODE_ENV=production`).
 
+### Données de démonstration (facultatif)
+
+```bash
+npm run db:seed:demo
+```
+
+Crée une famille fictive « Famille Exemple (démonstration) » et deux fiches
+fictives (« Jeanne Exemple », publiée, et « Paul Exemple », brouillon), clairement
+identifiées comme exemples. Idempotent.
+
 Connexion : <http://localhost:3000/connexion>
 
 ## Commandes
@@ -66,6 +76,7 @@ Connexion : <http://localhost:3000/connexion>
 | `npm run db:generate` | Génère une migration après modification de `src/lib/db/schema.ts` |
 | `npm run db:migrate` | Applique les migrations |
 | `npm run db:seed` | Crée les comptes de test |
+| `npm run db:seed:demo` | Crée les données de démonstration |
 | `npm run db:studio` | Explorateur visuel de la base (Drizzle Studio) |
 
 Réinitialiser la base locale : supprimer le dossier `data/` puis `npm run db:setup`.
@@ -107,6 +118,7 @@ scripts/
   setup-env.ts           création du .env local avec secrets aléatoires
   migrate.ts             application des migrations
   seed.ts                comptes de test + paramètres par défaut
+  seed-demo.ts           données de démonstration fictives
 src/
   proxy.ts               redirection optimiste vers /connexion (ex-« middleware »)
   app/
@@ -116,6 +128,8 @@ src/
     admin/               back-office (protégé)
       layout.tsx         garde d'authentification + navigation filtrée par rôle
       page.tsx           tableau de bord
+      familles/          liste, création, détail, modification, suppression
+      fiches/            liste, création, détail, modification, statuts
       employes/          liste des comptes (administrateur uniquement)
       acces-refuse/      page « accès refusé »
       actions.ts         déconnexion
@@ -131,7 +145,11 @@ src/
       password.ts        Argon2id
       permissions.ts     rôles → permissions
     security/crypto.ts   jetons, identifiants publics, hachage d'IP
-    validation/auth.ts   schémas Zod (connexion, politique de mot de passe)
+    validation/          schémas Zod (connexion, familles, fiches, champs communs)
+    families/service.ts  familles : liste, création, modification, suppression
+    profiles/service.ts  fiches : liste, création, modification, statuts, suppression logique
+    history.ts           historique d'une entité (depuis le journal)
+    query-utils.ts       pagination, recherche, diff de champs
     activity-log.ts      journal d'activité
     dashboard.ts         indicateurs du tableau de bord
     branding.ts          paramètres de personnalisation (lecture)
@@ -158,6 +176,39 @@ Défini dans [`src/lib/db/schema.ts`](src/lib/db/schema.ts) — 10 tables :
 Statuts d'une fiche : `draft`, `pending`, `published`, `archived`, `deleted`.
 Statuts de modération : `pending`, `approved`, `rejected`, `hidden`.
 
+## Familles et fiches (Phase 2)
+
+| Écran | Adresse |
+|---|---|
+| Liste des familles (recherche nom/contact, filtre statut, pagination) | `/admin/familles` |
+| Fiche famille (contact privé, fiches rattachées, historique) | `/admin/familles/[id]` |
+| Liste des fiches (recherche nom, filtres statut / famille / période de décès, pagination) | `/admin/fiches` |
+| Fiche défunt (contenu, visibilité publique, publication, historique) | `/admin/fiches/[id]` |
+
+**Statuts d'une fiche** : brouillon → en attente de validation → publiée → archivée.
+Une fiche est toujours créée en brouillon. « Supprimée » est une suppression
+logique (la fiche reste en base) ; un administrateur peut la restaurer, elle
+revient alors en brouillon, jamais directement publiée.
+
+**Visibilité publique champ par champ** : dates, biographie, cérémonie,
+informations pratiques, galerie, condoléances et bougies peuvent être masquées
+individuellement. Les notes internes et toutes les données des familles sont
+toujours privées.
+
+**Droits** :
+
+| Action | Administrateur | Employé |
+|---|---|---|
+| Créer / modifier familles et fiches | ✅ | ✅ |
+| Publier, dépublier, archiver une fiche | ✅ | ✅ |
+| Supprimer une fiche (logique) / la restaurer | ✅ | ❌ |
+| Supprimer une famille (seulement sans fiche rattachée) | ✅ | ❌ |
+
+**Historique** : chaque création, modification, changement de statut,
+suppression et restauration est journalisé avec l'auteur et la date. Pour les
+modifications, seuls les **noms** des champs modifiés sont enregistrés, jamais
+leurs valeurs (pas de données privées dans le journal).
+
 ## Sécurité mise en place (Phase 1)
 
 - **Mots de passe** hachés en Argon2id ; jamais stockés ni journalisés en clair.
@@ -182,11 +233,18 @@ Statuts de modération : `pending`, `approved`, `rejected`, `hidden`.
 npm test
 ```
 
-23 tests couvrent : hachage et vérification des mots de passe, politique de mot de
-passe, génération des identifiants publics, jetons et hachage d'IP, matrice des
-permissions, validation de la connexion, cycle de vie des sessions (création,
-expiration, révocation, compte désactivé, suppression en cascade) et protection
-contre la force brute (par e-mail et par IP).
+50 tests couvrent :
+
+- **Phase 1** : hachage et vérification des mots de passe, politique de mot de
+  passe, identifiants publics, jetons et hachage d'IP, matrice des permissions,
+  validation de la connexion, cycle de vie des sessions, protection contre la
+  force brute.
+- **Phase 2** : validation des formulaires (dates, heures, URL `javascript:`
+  refusées, e-mail, téléphone), pagination, recherche insensible à la casse et
+  jokers `%`/`_` traités comme du texte, filtres, création / modification /
+  suppression des familles, identifiant public stable et unique, transitions de
+  statut et date de publication, suppression logique et restauration, absence
+  de valeurs privées dans le journal.
 
 ## Migration PostgreSQL (plus tard)
 

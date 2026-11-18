@@ -18,8 +18,8 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/admin", label: "Tableau de bord", permission: "dashboard.view" },
-  { href: "/admin/familles", label: "Familles", permission: "families.manage", upcoming: "Phase 2" },
-  { href: "/admin/fiches", label: "Fiches défunts", permission: "profiles.manage", upcoming: "Phase 2" },
+  { href: "/admin/familles", label: "Familles", permission: "families.manage" },
+  { href: "/admin/fiches", label: "Fiches défunts", permission: "profiles.manage" },
   { href: "/admin/moderation", label: "Modération", permission: "moderation.manage", upcoming: "Phase 5" },
   { href: "/admin/employes", label: "Employés", permission: "users.manage" },
   { href: "/admin/parametres", label: "Paramètres", permission: "settings.manage", upcoming: "Phase 6" },

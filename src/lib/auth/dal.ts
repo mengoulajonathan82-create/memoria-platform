@@ -63,6 +63,19 @@ export async function requirePermission(
   return user;
 }
 
+/**
+ * Pour les Server Actions : exige une permission et renvoie l'auteur de
+ * l'action (utilisateur + IP hachée) pour la traçabilité.
+ */
+export async function requireActor(permission: Permission): Promise<{
+  user: SessionUser;
+  actor: { userId: string; ipHash: string | null };
+}> {
+  const user = await requirePermission(permission);
+  const { ipHash } = await getRequestMeta();
+  return { user, actor: { userId: user.id, ipHash } };
+}
+
 export async function setSessionCookie(token: string, expiresAt: Date) {
   (await cookies()).set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
