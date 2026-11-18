@@ -16,7 +16,7 @@ des pages commémoratives accessibles par QR code permanent.
 | 1 — Fondations | Next.js, base SQLite + migrations, authentification, rôles, connexion, tableau de bord, comptes de test | ✅ Terminée |
 | 2 — Familles et fiches | CRUD, validation, statuts, recherche, filtres, pagination, historique | ✅ Terminée |
 | 3 — QR codes et page publique | URL stable, QR PNG/SVG, impression, page publique, dépublication, mentions légales | ✅ Terminée |
-| 4 — Médias | Téléversement sécurisé, galerie, corbeille | À venir |
+| 4 — Médias | Téléversement sécurisé, optimisation, photo principale, galerie, légendes, ordre, corbeille | ✅ Terminée |
 | 5 — Condoléances et bougies | Formulaires publics, modération, anti-spam | À venir |
 | 6 — Administration avancée | Employés, paramètres, export CSV, sauvegardes | À venir |
 
@@ -93,6 +93,7 @@ Voir [`.env.example`](.env.example). Le fichier `.env` n'est **jamais** versionn
 | `SESSION_TTL_HOURS` | Durée de vie d'une session du back-office (8 h par défaut) |
 | `IP_HASH_SECRET` | Secret pour hacher les adresses IP (≥ 32 caractères) |
 | `SEED_*` | Nom, e-mail et mot de passe des comptes de test |
+| `MEDIA_STORAGE_DIR` | Dossier des médias téléversés (`./uploads`, hors de `public/`, non versionné) |
 
 ## Stack technique
 
@@ -131,7 +132,8 @@ src/
       page.tsx           tableau de bord
       familles/          liste, création, détail, modification, suppression
       fiches/            liste, création, détail, modification, statuts, QR (PNG/SVG/impression)
-    memoire/[publicId]/  page commémorative publique (accès par QR code)
+    memoire/[publicId]/  page commémorative publique (accès par QR code) + diffusion des médias autorisés
+    api/admin/medias/    téléversement et diffusion des médias pour le back-office
     mentions-legales/    texte provisoire
     confidentialite/     texte provisoire
       employes/          liste des comptes (administrateur uniquement)
@@ -156,6 +158,7 @@ src/
     query-utils.ts       pagination, recherche, diff de champs
     profiles/public.ts   lecture publique en liste blanche
     qr.ts                URL publique et génération des QR codes
+    media/               détection du type réel, optimisation (sharp), stockage protégé, diffusion, service
     activity-log.ts      journal d'activité
     dashboard.ts         indicateurs du tableau de bord
     branding.ts          paramètres de personnalisation (lecture)
@@ -225,8 +228,8 @@ leurs valeurs (pas de données privées dans le journal).
   **Imprimer** (nom de l'entreprise, nom et dates du défunt, QR code, adresse).
   Généré localement par la bibliothèque open source `qrcode`, sans service externe.
 - **Page publique** (`/memoire/...`) : responsive, sobre, sans publicité.
-  Ordre : nom (photo en Phase 4), dates, biographie, cérémonie, informations
-  pratiques ; galerie (Phase 4), condoléances et bougies (Phase 5) à venir.
+  Ordre : photo et nom, dates, biographie, cérémonie, informations pratiques,
+  galerie ; condoléances et bougies (Phase 5) à venir.
 - **Statut** : seule une fiche « publiée » est affichée. Brouillon, en attente,
   archivée ou supprimée → page « Cette page n'est plus disponible », sans aucune
   donnée (pas même le nom). Identifiant inconnu → 404. Effet immédiat.
@@ -254,6 +257,37 @@ ne peut pas joindre « localhost » (le back-office l'indique par un avertisseme
 
 Rien n'est exposé sur Internet : seul le réseau local y a accès, tant que le serveur tourne.
 
+## Médias (Phase 4)
+
+Écran : **Fiche → Gérer les médias** (`/admin/fiches/[id]/medias`).
+
+| Type | Formats | Taille max | Traitement |
+|---|---|---|---|
+| Photo | JPEG, PNG, WebP | 15 Mo | ré-encodée en WebP, 2000 px max + miniature 640 px, **métadonnées supprimées** (GPS, appareil…) |
+| Vidéo | MP4, MOV, WebM | 100 Mo | stockée telle quelle |
+| Document | PDF | 10 Mo | stocké tel quel, toujours téléchargé (jamais affiché dans le site) |
+
+Maximum 100 médias actifs par fiche. Le format **HEIC** (photos iPhone) n'est pas
+pris en charge : exporter la photo en JPEG (ou régler l'iPhone sur « Le plus compatible »).
+
+- **Photo principale** : une photo de la fiche, toujours affichée en haut de la page publique.
+- **Galerie** : médias « visibles publiquement », dans l'ordre choisi (↑ ↓), avec légende.
+- **Corbeille** : suppression logique (le fichier est conservé) ; un employé peut
+  mettre à la corbeille, seul un administrateur peut restaurer.
+
+**Sécurité des fichiers** :
+- type vérifié sur le **contenu réel** (signature), pas sur le nom ; l'extension doit correspondre ;
+- photos ré-encodées : un fichier piégé déguisé en image ne survit pas au traitement ;
+  images démesurées (« bombes de décompression ») refusées ;
+- stockage dans `uploads/`, **hors de `public/`** : aucun fichier n'est servi directement ;
+  noms de fichiers aléatoires, chemins contrôlés (pas de `../`), jamais d'écrasement ;
+- diffusion par des routes qui vérifient les droits, avec `nosniff`, CSP `sandbox` ;
+- **public** : uniquement si la fiche est publiée et le média autorisé (photo principale, ou
+  média public avec galerie affichée) ; revalidation à chaque affichage pour qu'une
+  dépublication ou un masquage prenne effet immédiatement ;
+- téléversement sur `/api/admin/medias` (hors du proxy qui limite les envois à 10 Mo) :
+  contrôle d'origine (anti-CSRF), session, permission, taille et type côté serveur.
+
 ## Sécurité mise en place (Phase 1)
 
 - **Mots de passe** hachés en Argon2id ; jamais stockés ni journalisés en clair.
@@ -278,7 +312,7 @@ Rien n'est exposé sur Internet : seul le réseau local y a accès, tant que le 
 npm test
 ```
 
-61 tests couvrent :
+80 tests couvrent :
 
 - **Phase 1** : hachage et vérification des mots de passe, politique de mot de
   passe, identifiants publics, jetons et hachage d'IP, matrice des permissions,
@@ -295,6 +329,11 @@ npm test
   modification, liste blanche exacte des champs publics, absence de toute donnée
   privée, champs masqués à `null`, URL publique, **décodage réel du QR code PNG**
   (il contient exactement l'URL publique), SVG sans script, noms de fichiers sûrs.
+- **Phase 4** : signatures de fichiers (fichier HTML ou exécutable déguisé refusé, HEIC
+  signalé), extension incohérente, taille, image corrompue, suppression des métadonnées
+  EXIF, redimensionnement, bombe de décompression, sortie du dossier de stockage,
+  non-écrasement, requêtes partielles, ordre, légende, visibilité, corbeille et
+  restauration, photo principale, règles d'accès public, absence de donnée interne.
 
 ## Migration PostgreSQL (plus tard)
 

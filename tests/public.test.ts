@@ -127,6 +127,8 @@ describe("page publique : confidentialité", () => {
       "ceremony",
       "deathDate",
       "fullName",
+      "gallery",
+      "mainPhoto",
       "practicalInfo",
       "showGallery",
     ]);

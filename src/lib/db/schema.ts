@@ -250,10 +250,19 @@ export const media = sqliteTable(
       .notNull()
       .references(() => deceasedProfiles.id, { onDelete: "cascade" }),
     type: text("type", { enum: MEDIA_TYPES }).notNull(),
+    /**
+     * Clé aléatoire utilisée dans les URL de diffusion (jamais l'identifiant
+     * interne). Sert aussi de nom de fichier dans le stockage.
+     */
+    publicKey: text("public_key").notNull(),
     /** Chemin relatif dans le stockage protégé (jamais un chemin absolu). */
     storagePath: text("storage_path").notNull(),
+    /** Miniature (images uniquement). */
+    thumbPath: text("thumb_path"),
     mimeType: text("mime_type").notNull(),
     sizeBytes: integer("size_bytes").notNull(),
+    width: integer("width"),
+    height: integer("height"),
     caption: text("caption"),
     sortOrder: integer("sort_order").notNull().default(0),
     isPublic: integer("is_public", { mode: "boolean" }).notNull().default(true),
@@ -265,8 +274,13 @@ export const media = sqliteTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [index("media_profile_idx").on(t.profileId, t.status, t.sortOrder)],
+  (t) => [
+    index("media_profile_idx").on(t.profileId, t.status, t.sortOrder),
+    uniqueIndex("media_public_key_unique").on(t.publicKey),
+  ],
 );
+
+export type Media = typeof media.$inferSelect;
 
 /* -------------------------------------------------------------------------- */
 /* Condoléances et bougies                                                    */

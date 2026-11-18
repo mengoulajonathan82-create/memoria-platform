@@ -19,7 +19,7 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   cacheComponents: false,
   poweredByHeader: false,
-  serverExternalPackages: ["@libsql/client", "libsql", "@node-rs/argon2"],
+  serverExternalPackages: ["@libsql/client", "libsql", "@node-rs/argon2", "sharp"],
   turbopack: {
     rules: {
       "*.css": {

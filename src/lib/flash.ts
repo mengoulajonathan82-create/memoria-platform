@@ -9,6 +9,10 @@ const SUCCESS_MESSAGES = {
   statut: "Statut mis à jour.",
   supprime: "Suppression effectuée.",
   restaure: "Fiche restaurée en brouillon.",
+  ordre: "Ordre d'affichage mis à jour.",
+  photo: "Photo principale mise à jour.",
+  corbeille: "Média placé dans la corbeille.",
+  "restaure-media": "Média restauré.",
 } as const;
 
 const ERROR_MESSAGES = {
@@ -17,6 +21,7 @@ const ERROR_MESSAGES = {
   introuvable: "Élément introuvable.",
   "statut-invalide": "Ce changement de statut n'est pas possible.",
   "droits-insuffisants": "Vous n'avez pas les droits nécessaires pour cette action.",
+  "legende-invalide": "Légende invalide (300 caractères maximum).",
 } as const;
 
 export type SuccessKey = keyof typeof SUCCESS_MESSAGES;

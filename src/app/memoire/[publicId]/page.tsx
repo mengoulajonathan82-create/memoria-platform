@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element -- images servies par une route contrôlée, déjà optimisées par sharp */
 /**
  * Page commémorative PUBLIQUE, ouverte par le QR code.
  *
@@ -63,14 +64,24 @@ function Memorial({ profile }: { profile: PublicProfile }) {
 
   return (
     <article className="mx-auto max-w-2xl px-5 pt-10 sm:pt-14">
-      {/* 1. Photo et nom (photo réelle : Phase 4) */}
+      {/* 1. Photo et nom */}
       <header className="text-center">
-        <div
-          aria-hidden="true"
-          className="mx-auto flex size-28 items-center justify-center rounded-full border border-border bg-surface font-serif text-3xl text-muted sm:size-36"
-        >
-          {initials(profile.fullName)}
-        </div>
+        {profile.mainPhoto ? (
+          <img
+            src={profile.mainPhoto.url}
+            alt={`Portrait de ${profile.fullName}`}
+            width={profile.mainPhoto.width ?? undefined}
+            height={profile.mainPhoto.height ?? undefined}
+            className="mx-auto size-40 rounded-full border border-border object-cover shadow-sm sm:size-48"
+          />
+        ) : (
+          <div
+            aria-hidden="true"
+            className="mx-auto flex size-28 items-center justify-center rounded-full border border-border bg-surface font-serif text-3xl text-muted sm:size-36"
+          >
+            {initials(profile.fullName)}
+          </div>
+        )}
         <p className="mt-6 text-sm tracking-widest text-muted uppercase">En mémoire de</p>
         <h1 className="mt-2 font-serif text-3xl leading-tight text-balance sm:text-4xl">{profile.fullName}</h1>
 
@@ -128,7 +139,51 @@ function Memorial({ profile }: { profile: PublicProfile }) {
         </Section>
       ) : null}
 
-      {/* 5. Galerie de souvenirs — Phase 4 */}
+      {/* 5. Galerie de souvenirs */}
+      {profile.gallery.length ? (
+        <Section title="Souvenirs">
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {profile.gallery.map((item) => (
+              <li
+                key={item.url}
+                className={item.type === "image" ? "" : "col-span-2 sm:col-span-3"}
+              >
+                <figure>
+                  {item.type === "image" ? (
+                    <a href={item.url} target="_blank" rel="noopener" className="block">
+                      <img
+                        src={item.thumbUrl ?? item.url}
+                        alt={item.caption ?? `Souvenir de ${profile.fullName}`}
+                        loading="lazy"
+                        className="aspect-square w-full rounded-lg border border-border object-cover"
+                      />
+                    </a>
+                  ) : item.type === "video" ? (
+                    <video
+                      controls
+                      preload="metadata"
+                      playsInline
+                      className="w-full rounded-lg bg-black"
+                    >
+                      <source src={item.url} type={item.mimeType} />
+                    </video>
+                  ) : (
+                    <a
+                      href={item.url}
+                      className="block rounded-lg border border-border bg-surface px-4 py-3 text-center underline underline-offset-4"
+                    >
+                      Télécharger le document{item.caption ? ` : ${item.caption}` : ""} (PDF)
+                    </a>
+                  )}
+                  {item.caption && item.type !== "document" ? (
+                    <figcaption className="mt-1.5 text-center text-sm text-muted">{item.caption}</figcaption>
+                  ) : null}
+                </figure>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      ) : null}
       {/* 6. Messages de condoléances — Phase 5 */}
       {/* 7. Bougies numériques — Phase 5 */}
     </article>

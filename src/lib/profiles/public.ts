@@ -8,9 +8,9 @@
  *   quitter ce module ;
  * - seule une fiche au statut « publiée » est renvoyée.
  */
-import { eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import type { Database } from "@/lib/db/client";
-import { deceasedProfiles } from "@/lib/db/schema";
+import { deceasedProfiles, media } from "@/lib/db/schema";
 import { isValidPublicId } from "@/lib/security/crypto";
 
 export interface PublicCeremony {
@@ -21,9 +21,27 @@ export interface PublicCeremony {
   livestreamUrl: string | null;
 }
 
+export interface PublicPhoto {
+  url: string;
+  width: number | null;
+  height: number | null;
+}
+
+export interface PublicMediaItem {
+  type: "image" | "video" | "document";
+  url: string;
+  thumbUrl: string | null;
+  mimeType: string;
+  caption: string | null;
+  width: number | null;
+  height: number | null;
+}
+
 /** Données pouvant être affichées publiquement. Rien d'autre ne doit y figurer. */
 export interface PublicProfile {
   fullName: string;
+  mainPhoto: PublicPhoto | null;
+  gallery: PublicMediaItem[];
   birthDate: string | null;
   deathDate: string | null;
   biography: string | null;
@@ -48,6 +66,9 @@ export async function getPublicProfile(
 
   const [row] = await db
     .select({
+      // Utilisé uniquement pour charger les médias ; jamais renvoyé.
+      internalId: deceasedProfiles.id,
+      mainPhotoMediaId: deceasedProfiles.mainPhotoMediaId,
       status: deceasedProfiles.status,
       fullName: deceasedProfiles.fullName,
       birthDate: deceasedProfiles.birthDate,
@@ -83,10 +104,44 @@ export async function getPublicProfile(
   };
   const hasCeremony = Object.values(ceremony).some(Boolean);
 
+  const activeMedia = await db
+    .select({
+      id: media.id,
+      publicKey: media.publicKey,
+      type: media.type,
+      mimeType: media.mimeType,
+      caption: media.caption,
+      width: media.width,
+      height: media.height,
+      isPublic: media.isPublic,
+      thumbPath: media.thumbPath,
+    })
+    .from(media)
+    .where(and(eq(media.profileId, row.internalId), eq(media.status, "active")))
+    .orderBy(asc(media.sortOrder), asc(media.createdAt));
+
+  const mediaUrl = (key: string) => `/memoire/${publicId}/medias/${key}`;
+  const main = activeMedia.find((m) => m.id === row.mainPhotoMediaId && m.type === "image");
+  const gallery: PublicMediaItem[] = row.showGallery
+    ? activeMedia
+        .filter((m) => m.isPublic && m.id !== main?.id)
+        .map((m) => ({
+          type: m.type,
+          url: mediaUrl(m.publicKey),
+          thumbUrl: m.thumbPath ? `${mediaUrl(m.publicKey)}?v=thumb` : null,
+          mimeType: m.mimeType,
+          caption: m.caption,
+          width: m.width,
+          height: m.height,
+        }))
+    : [];
+
   return {
     kind: "published",
     profile: {
       fullName: row.fullName,
+      mainPhoto: main ? { url: mediaUrl(main.publicKey), width: main.width, height: main.height } : null,
+      gallery,
       birthDate: row.showDates ? row.birthDate : null,
       deathDate: row.showDates ? row.deathDate : null,
       biography: row.showBiography ? row.biography : null,

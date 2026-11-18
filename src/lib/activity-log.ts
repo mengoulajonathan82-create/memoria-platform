@@ -22,6 +22,10 @@ export type ActivityAction =
   | "profile.unpublish"
   | "profile.delete"
   | "profile.restore"
+  | "media.upload"
+  | "media.update"
+  | "media.delete"
+  | "media.restore"
   | "moderation.update";
 
 export const ACTIVITY_LABELS: Record<ActivityAction, string> = {
@@ -41,6 +45,10 @@ export const ACTIVITY_LABELS: Record<ActivityAction, string> = {
   "profile.unpublish": "Dépublication d'une fiche",
   "profile.delete": "Suppression d'une fiche",
   "profile.restore": "Restauration d'une fiche",
+  "media.upload": "Ajout d'un média",
+  "media.update": "Modification d'un média",
+  "media.delete": "Mise à la corbeille d'un média",
+  "media.restore": "Restauration d'un média",
   "moderation.update": "Modération",
 };
 

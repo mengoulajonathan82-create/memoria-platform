@@ -21,6 +21,7 @@ import { getServerEnv } from "@/lib/env";
 import { readFlash } from "@/lib/flash";
 import { buildPublicUrl, generateQrSvg, isLocalOnlyUrl } from "@/lib/qr";
 import { getEntityHistory } from "@/lib/history";
+import { listProfileMedia } from "@/lib/media/service";
 import { getProfile } from "@/lib/profiles/service";
 import {
   PROFILE_STATUS_LABELS,
@@ -57,10 +58,12 @@ export default async function ProfilePage(props: PageProps<"/admin/fiches/[id]">
   const db = await getDb();
   const profile = await getProfile(db, id);
   if (!profile) notFound();
-  const [history, searchParams] = await Promise.all([
+  const [history, searchParams, activeMedia] = await Promise.all([
     getEntityHistory(db, "profile", id),
     props.searchParams,
+    listProfileMedia(db, id, "active"),
   ]);
+  const mediaCount = activeMedia.length;
 
   const appUrl = getServerEnv().APP_URL;
   const publicUrl = buildPublicUrl(appUrl, profile.publicId);
@@ -148,6 +151,23 @@ export default async function ProfilePage(props: PageProps<"/admin/fiches/[id]">
           <Card title="Informations pratiques" actions={<Visibility on={profile.showPracticalInfo} />}>
             <p className="text-sm whitespace-pre-line">{profile.practicalInfo || "—"}</p>
           </Card>
+
+          {!isDeleted ? (
+            <Card
+              title={`Photos et médias (${mediaCount})`}
+              actions={
+                <Link href={`/admin/fiches/${id}/medias`} className="text-sm underline underline-offset-4">
+                  Gérer les médias
+                </Link>
+              }
+            >
+              <p className="text-sm text-muted">
+                {profile.mainPhotoMediaId
+                  ? "Une photo principale est définie."
+                  : "Aucune photo principale : la page publique affiche les initiales."}
+              </p>
+            </Card>
+          ) : null}
 
           <Card title="Options publiques">
             <ul className="space-y-1 text-sm">
