@@ -15,7 +15,7 @@ des pages commémoratives accessibles par QR code permanent.
 |---|---|---|
 | 1 — Fondations | Next.js, base SQLite + migrations, authentification, rôles, connexion, tableau de bord, comptes de test | ✅ Terminée |
 | 2 — Familles et fiches | CRUD, validation, statuts, recherche, filtres, pagination, historique | ✅ Terminée |
-| 3 — QR codes et page publique | URL stable, QR PNG/SVG, page publique, dépublication | À venir |
+| 3 — QR codes et page publique | URL stable, QR PNG/SVG, impression, page publique, dépublication, mentions légales | ✅ Terminée |
 | 4 — Médias | Téléversement sécurisé, galerie, corbeille | À venir |
 | 5 — Condoléances et bougies | Formulaires publics, modération, anti-spam | À venir |
 | 6 — Administration avancée | Employés, paramètres, export CSV, sauvegardes | À venir |
@@ -77,6 +77,7 @@ Connexion : <http://localhost:3000/connexion>
 | `npm run db:migrate` | Applique les migrations |
 | `npm run db:seed` | Crée les comptes de test |
 | `npm run db:seed:demo` | Crée les données de démonstration |
+| `npm run start:lan` | Serveur de production accessible depuis le réseau local (test sur téléphone) |
 | `npm run db:studio` | Explorateur visuel de la base (Drizzle Studio) |
 
 Réinitialiser la base locale : supprimer le dossier `data/` puis `npm run db:setup`.
@@ -129,7 +130,10 @@ src/
       layout.tsx         garde d'authentification + navigation filtrée par rôle
       page.tsx           tableau de bord
       familles/          liste, création, détail, modification, suppression
-      fiches/            liste, création, détail, modification, statuts
+      fiches/            liste, création, détail, modification, statuts, QR (PNG/SVG/impression)
+    memoire/[publicId]/  page commémorative publique (accès par QR code)
+    mentions-legales/    texte provisoire
+    confidentialite/     texte provisoire
       employes/          liste des comptes (administrateur uniquement)
       acces-refuse/      page « accès refusé »
       actions.ts         déconnexion
@@ -150,6 +154,8 @@ src/
     profiles/service.ts  fiches : liste, création, modification, statuts, suppression logique
     history.ts           historique d'une entité (depuis le journal)
     query-utils.ts       pagination, recherche, diff de champs
+    profiles/public.ts   lecture publique en liste blanche
+    qr.ts                URL publique et génération des QR codes
     activity-log.ts      journal d'activité
     dashboard.ts         indicateurs du tableau de bord
     branding.ts          paramètres de personnalisation (lecture)
@@ -209,6 +215,45 @@ suppression et restauration est journalisé avec l'auteur et la date. Pour les
 modifications, seuls les **noms** des champs modifiés sont enregistrés, jamais
 leurs valeurs (pas de données privées dans le journal).
 
+## QR codes et page publique (Phase 3)
+
+- **URL publique** : `APP_URL/memoire/<identifiant public>`. Elle est créée avec
+  la fiche et ne change jamais, même si le contenu est modifié, dépublié puis
+  republié. Elle ne contient aucun identifiant interne.
+- **QR code** : visible sur la fiche dans le back-office, téléchargeable en
+  **PNG** (1024 px, pour l'impression) et **SVG** (vectoriel), et page
+  **Imprimer** (nom de l'entreprise, nom et dates du défunt, QR code, adresse).
+  Généré localement par la bibliothèque open source `qrcode`, sans service externe.
+- **Page publique** (`/memoire/...`) : responsive, sobre, sans publicité.
+  Ordre : nom (photo en Phase 4), dates, biographie, cérémonie, informations
+  pratiques ; galerie (Phase 4), condoléances et bougies (Phase 5) à venir.
+- **Statut** : seule une fiche « publiée » est affichée. Brouillon, en attente,
+  archivée ou supprimée → page « Cette page n'est plus disponible », sans aucune
+  donnée (pas même le nom). Identifiant inconnu → 404. Effet immédiat.
+- **Confidentialité** : la requête publique lit une **liste blanche** de colonnes
+  et remplace les champs masqués par `null` avant le rendu. Notes internes,
+  famille, coordonnées et identifiants internes ne peuvent pas atteindre le HTML.
+- `/mentions-legales` et `/confidentialite` : **textes provisoires** à
+  personnaliser et faire valider avant toute mise en ligne.
+
+### Tester sur un téléphone (même réseau Wi-Fi)
+
+Par défaut `APP_URL=http://localhost:3000` : un téléphone qui scanne le QR code
+ne peut pas joindre « localhost » (le back-office l'indique par un avertissement).
+
+1. Trouver l'adresse IP locale de l'ordinateur : `ipconfig` (ligne « Adresse IPv4 »,
+   par ex. `192.168.1.20`).
+2. Dans `.env`, mettre `APP_URL=http://192.168.1.20:3000`.
+3. Lancer la version de production accessible sur le réseau local :
+   ```bash
+   npm run build
+   npm run start:lan
+   ```
+   Windows peut demander d'autoriser Node.js dans le pare-feu (réseau **privé** uniquement).
+4. Scanner le QR code d'une fiche **publiée** avec le téléphone.
+
+Rien n'est exposé sur Internet : seul le réseau local y a accès, tant que le serveur tourne.
+
 ## Sécurité mise en place (Phase 1)
 
 - **Mots de passe** hachés en Argon2id ; jamais stockés ni journalisés en clair.
@@ -222,7 +267,7 @@ leurs valeurs (pas de données privées dans le journal).
   (`requireUser` / `requirePermission`) ; le proxy ne fait qu'une redirection optimiste.
 - **IP** : jamais stockées en clair (HMAC-SHA256 tronqué).
 - **Identifiants publics** des fiches : 32 caractères aléatoires (~186 bits),
-  distincts des identifiants internes (utilisés en Phase 3).
+  distincts des identifiants internes ; seuls utilisés dans les URL publiques et QR codes.
 - **En-têtes** : `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`,
   `Permissions-Policy` ; pages non indexées par les moteurs de recherche.
 - Server Actions protégées contre le CSRF par la vérification d'origine de Next.js.
@@ -233,7 +278,7 @@ leurs valeurs (pas de données privées dans le journal).
 npm test
 ```
 
-50 tests couvrent :
+61 tests couvrent :
 
 - **Phase 1** : hachage et vérification des mots de passe, politique de mot de
   passe, identifiants publics, jetons et hachage d'IP, matrice des permissions,
@@ -245,6 +290,11 @@ npm test
   suppression des familles, identifiant public stable et unique, transitions de
   statut et date de publication, suppression logique et restauration, absence
   de valeurs privées dans le journal.
+- **Phase 3** : accès public selon le statut (publiée / indisponible /
+  introuvable, effet immédiat de la dépublication), URL stable après
+  modification, liste blanche exacte des champs publics, absence de toute donnée
+  privée, champs masqués à `null`, URL publique, **décodage réel du QR code PNG**
+  (il contient exactement l'URL publique), SVG sans script, noms de fichiers sûrs.
 
 ## Migration PostgreSQL (plus tard)
 

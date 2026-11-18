@@ -17,7 +17,9 @@ import {
 import { requirePermission } from "@/lib/auth/dal";
 import { hasPermission } from "@/lib/auth/permissions";
 import { getDb } from "@/lib/db";
+import { getServerEnv } from "@/lib/env";
 import { readFlash } from "@/lib/flash";
+import { buildPublicUrl, generateQrSvg, isLocalOnlyUrl } from "@/lib/qr";
 import { getEntityHistory } from "@/lib/history";
 import { getProfile } from "@/lib/profiles/service";
 import {
@@ -59,6 +61,11 @@ export default async function ProfilePage(props: PageProps<"/admin/fiches/[id]">
     getEntityHistory(db, "profile", id),
     props.searchParams,
   ]);
+
+  const appUrl = getServerEnv().APP_URL;
+  const publicUrl = buildPublicUrl(appUrl, profile.publicId);
+  const localOnly = isLocalOnlyUrl(appUrl);
+  const qrSvg = profile.status === "deleted" ? "" : await generateQrSvg(publicUrl);
 
   const isDeleted = profile.status === "deleted";
   const isPublished = profile.status === "published";
@@ -170,10 +177,45 @@ export default async function ProfilePage(props: PageProps<"/admin/fiches/[id]">
               <div className="space-y-4 text-sm">
                 <div>
                   <p className="text-muted">Adresse publique (stable, utilisée par le QR code) :</p>
-                  <code className="mt-1 block break-all rounded bg-background px-2 py-1 text-xs">
-                    /memoire/{profile.publicId}
-                  </code>
-                  <p className="mt-1 text-xs text-muted">Page publique et QR code : Phase 3.</p>
+                  <a
+                    href={publicUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 block break-all rounded bg-background px-2 py-1 text-xs underline-offset-2 hover:underline"
+                  >
+                    {publicUrl}
+                  </a>
+                  {!isPublished ? (
+                    <p className="mt-1 text-xs text-muted">
+                      Non publiée : cette adresse affiche « page non disponible ».
+                    </p>
+                  ) : null}
+                </div>
+                <div>
+                  <div
+                    className="mx-auto w-40 [&>svg]:h-auto [&>svg]:w-full"
+                    role="img"
+                    aria-label="QR code de la page publique"
+                    // SVG produit par la bibliothèque qrcode à partir de notre propre URL.
+                    dangerouslySetInnerHTML={{ __html: qrSvg }}
+                  />
+                  <div className="mt-3 flex flex-wrap justify-center gap-2">
+                    <a href={`/admin/fiches/${id}/qr?format=png&download=1`} className="rounded-md border border-border px-3 py-1.5 hover:bg-background">
+                      PNG
+                    </a>
+                    <a href={`/admin/fiches/${id}/qr?format=svg&download=1`} className="rounded-md border border-border px-3 py-1.5 hover:bg-background">
+                      SVG
+                    </a>
+                    <Link href={`/admin/fiches/${id}/qr/imprimer`} className="rounded-md border border-border px-3 py-1.5 hover:bg-background">
+                      Imprimer
+                    </Link>
+                  </div>
+                  {localOnly ? (
+                    <p className="mt-3 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                      APP_URL pointe vers « localhost » : ce QR code ne fonctionnera pas depuis un
+                      téléphone. Voir le README, section « Tester sur un téléphone ».
+                    </p>
+                  ) : null}
                 </div>
                 {statusActions.length ? (
                   <form action={changeProfileStatusAction.bind(null, id)} className="flex flex-col gap-2">
