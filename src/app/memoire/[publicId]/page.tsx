@@ -16,7 +16,11 @@ import { PublicShell } from "@/components/public-shell";
 import { formatIsoDate } from "@/components/ui";
 import { getBranding } from "@/lib/branding";
 import { getDb } from "@/lib/db";
+import { getServerEnv } from "@/lib/env";
 import { getPublicProfile, type PublicProfile } from "@/lib/profiles/public";
+import { createFormToken } from "@/lib/tributes/spam";
+import { submitCandleAction, submitCondolenceAction } from "./actions";
+import { CandleForm, CondolenceForm } from "./tribute-forms";
 
 const lookup = cache(async (publicId: string) => getPublicProfile(await getDb(), publicId));
 
@@ -58,7 +62,17 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function Memorial({ profile }: { profile: PublicProfile }) {
+const publicDateFormatter = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" });
+
+function Memorial({
+  profile,
+  publicId,
+  formToken,
+}: {
+  profile: PublicProfile;
+  publicId: string;
+  formToken: string;
+}) {
   const { ceremony } = profile;
   const dates = [profile.birthDate, profile.deathDate].some(Boolean);
 
@@ -184,8 +198,57 @@ function Memorial({ profile }: { profile: PublicProfile }) {
           </ul>
         </Section>
       ) : null}
-      {/* 6. Messages de condoléances — Phase 5 */}
-      {/* 7. Bougies numériques — Phase 5 */}
+      {/* 6. Messages de condoléances */}
+      {profile.condolences ? (
+        <Section title="Messages de condoléances">
+          {profile.condolences.length ? (
+            <ul className="space-y-4">
+              {profile.condolences.map((c, i) => (
+                <li key={i} className="rounded-xl border border-border bg-surface p-5">
+                  <p className="leading-relaxed whitespace-pre-line">{c.message}</p>
+                  <p className="mt-3 text-sm text-muted">
+                    {c.authorName} · {publicDateFormatter.format(c.createdAt)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-center text-muted">Soyez le premier à laisser un message.</p>
+          )}
+          <div className="mt-8 rounded-xl border border-border bg-background p-5">
+            <h3 className="mb-1 font-medium">Laisser un message</h3>
+            <p className="mb-4 text-sm text-muted">
+              Les messages sont relus avant d&apos;être publiés.
+            </p>
+            <CondolenceForm action={submitCondolenceAction.bind(null, publicId)} formToken={formToken} />
+          </div>
+        </Section>
+      ) : null}
+
+      {/* 7. Bougies numériques */}
+      {profile.candles ? (
+        <Section title="Bougies">
+          <p className="text-center text-lg">
+            <span aria-hidden="true" className="mr-1">🕯️</span>
+            {profile.candles.count === 0
+              ? "Aucune bougie allumée pour le moment."
+              : `${profile.candles.count} bougie${profile.candles.count > 1 ? "s" : ""} allumée${profile.candles.count > 1 ? "s" : ""}`}
+          </p>
+          {profile.candles.recent.length ? (
+            <ul className="mt-5 grid gap-2 sm:grid-cols-2">
+              {profile.candles.recent.map((c, i) => (
+                <li key={i} className="rounded-lg border border-border bg-surface px-4 py-3 text-sm">
+                  <span className="font-medium">{c.firstName ?? "Une pensée"}</span>
+                  {c.message ? <span className="block text-muted">{c.message}</span> : null}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <div className="mt-6 rounded-xl border border-border bg-background p-5">
+            <CandleForm action={submitCandleAction.bind(null, publicId)} formToken={formToken} />
+          </div>
+        </Section>
+      ) : null}
     </article>
   );
 }
@@ -213,7 +276,11 @@ export default async function MemorialPage(props: PageProps<"/memoire/[publicId]
     <PublicShell branding={branding}>
       {result.kind === "published" ? (
         <main>
-          <Memorial profile={result.profile} />
+          <Memorial
+            profile={result.profile}
+            publicId={publicId}
+            formToken={createFormToken(getServerEnv().IP_HASH_SECRET, publicId)}
+          />
         </main>
       ) : (
         <Unavailable />

@@ -22,6 +22,7 @@ import { readFlash } from "@/lib/flash";
 import { buildPublicUrl, generateQrSvg, isLocalOnlyUrl } from "@/lib/qr";
 import { getEntityHistory } from "@/lib/history";
 import { listProfileMedia } from "@/lib/media/service";
+import { getTributeStats } from "@/lib/tributes/service";
 import { getProfile } from "@/lib/profiles/service";
 import {
   PROFILE_STATUS_LABELS,
@@ -58,10 +59,11 @@ export default async function ProfilePage(props: PageProps<"/admin/fiches/[id]">
   const db = await getDb();
   const profile = await getProfile(db, id);
   if (!profile) notFound();
-  const [history, searchParams, activeMedia] = await Promise.all([
+  const [history, searchParams, activeMedia, tributeStats] = await Promise.all([
     getEntityHistory(db, "profile", id),
     props.searchParams,
     listProfileMedia(db, id, "active"),
+    getTributeStats(db, id),
   ]);
   const mediaCount = activeMedia.length;
 
@@ -168,6 +170,31 @@ export default async function ProfilePage(props: PageProps<"/admin/fiches/[id]">
               </p>
             </Card>
           ) : null}
+
+          <Card
+            title="Condoléances et bougies"
+            actions={
+              can("moderation.manage") ? (
+                <Link href={`/admin/moderation?statut=tous&fiche=${id}`} className="text-sm underline underline-offset-4">
+                  Modérer
+                </Link>
+              ) : null
+            }
+          >
+            <dl className="grid grid-cols-2 gap-4 text-center sm:grid-cols-4">
+              {[
+                { label: "Messages publiés", value: tributeStats.condolences.approved },
+                { label: "Messages en attente", value: tributeStats.condolences.pending },
+                { label: "Bougies allumées", value: tributeStats.candles.approved },
+                { label: "Bougies en attente", value: tributeStats.candles.pending },
+              ].map((s) => (
+                <div key={s.label}>
+                  <dt className="text-xs text-muted">{s.label}</dt>
+                  <dd className="text-2xl font-semibold tabular-nums">{s.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </Card>
 
           <Card title="Options publiques">
             <ul className="space-y-1 text-sm">

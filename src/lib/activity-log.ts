@@ -26,7 +26,8 @@ export type ActivityAction =
   | "media.update"
   | "media.delete"
   | "media.restore"
-  | "moderation.update";
+  | "moderation.update"
+  | "moderation.delete";
 
 export const ACTIVITY_LABELS: Record<ActivityAction, string> = {
   "auth.login": "Connexion",
@@ -50,6 +51,7 @@ export const ACTIVITY_LABELS: Record<ActivityAction, string> = {
   "media.delete": "Mise à la corbeille d'un média",
   "media.restore": "Restauration d'un média",
   "moderation.update": "Modération",
+  "moderation.delete": "Suppression d'un message ou d'une bougie",
 };
 
 export interface ActivityEntry {

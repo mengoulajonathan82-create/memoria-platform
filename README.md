@@ -17,7 +17,7 @@ des pages commémoratives accessibles par QR code permanent.
 | 2 — Familles et fiches | CRUD, validation, statuts, recherche, filtres, pagination, historique | ✅ Terminée |
 | 3 — QR codes et page publique | URL stable, QR PNG/SVG, impression, page publique, dépublication, mentions légales | ✅ Terminée |
 | 4 — Médias | Téléversement sécurisé, optimisation, photo principale, galerie, légendes, ordre, corbeille | ✅ Terminée |
-| 5 — Condoléances et bougies | Formulaires publics, modération, anti-spam | À venir |
+| 5 — Condoléances et bougies | Formulaires publics, file de modération, anti-spam, statistiques | ✅ Terminée |
 | 6 — Administration avancée | Employés, paramètres, export CSV, sauvegardes | À venir |
 
 ## Prérequis
@@ -136,6 +136,7 @@ src/
     api/admin/medias/    téléversement et diffusion des médias pour le back-office
     mentions-legales/    texte provisoire
     confidentialite/     texte provisoire
+      moderation/        file de modération (condoléances et bougies)
       employes/          liste des comptes (administrateur uniquement)
       acces-refuse/      page « accès refusé »
       actions.ts         déconnexion
@@ -158,6 +159,7 @@ src/
     query-utils.ts       pagination, recherche, diff de champs
     profiles/public.ts   lecture publique en liste blanche
     qr.ts                URL publique et génération des QR codes
+    tributes/            condoléances et bougies : dépôt, anti-spam, modération, statistiques
     media/               détection du type réel, optimisation (sharp), stockage protégé, diffusion, service
     activity-log.ts      journal d'activité
     dashboard.ts         indicateurs du tableau de bord
@@ -229,7 +231,7 @@ leurs valeurs (pas de données privées dans le journal).
   Généré localement par la bibliothèque open source `qrcode`, sans service externe.
 - **Page publique** (`/memoire/...`) : responsive, sobre, sans publicité.
   Ordre : photo et nom, dates, biographie, cérémonie, informations pratiques,
-  galerie ; condoléances et bougies (Phase 5) à venir.
+  galerie, messages de condoléances, bougies.
 - **Statut** : seule une fiche « publiée » est affichée. Brouillon, en attente,
   archivée ou supprimée → page « Cette page n'est plus disponible », sans aucune
   donnée (pas même le nom). Identifiant inconnu → 404. Effet immédiat.
@@ -288,6 +290,34 @@ pris en charge : exporter la photo en JPEG (ou régler l'iPhone sur « Le plus c
 - téléversement sur `/api/admin/medias` (hors du proxy qui limite les envois à 10 Mo) :
   contrôle d'origine (anti-CSRF), session, permission, taille et type côté serveur.
 
+## Condoléances et bougies (Phase 5)
+
+**Côté visiteur** (page publique, sans compte) :
+- *Message de condoléances* : nom, message, coordonnées facultatives (jamais
+  affichées), case de consentement obligatoire. **Toujours** relu avant publication.
+- *Bougie* : prénom et petit mot facultatifs. Sans mot, elle s'affiche tout de
+  suite ; avec un mot, elle passe d'abord en modération. Compteur de bougies affiché.
+- Sections masquées si l'option correspondante est désactivée sur la fiche.
+
+**Côté personnel** : menu **Modération** (avec le nombre d'éléments en attente) —
+onglets Condoléances / Bougies, filtres par statut et par fiche, actions
+**Approuver**, **Refuser**, **Masquer** et **Supprimer** (définitif, efface aussi
+les coordonnées). Accessible aux administrateurs et aux employés. Chaque décision
+est journalisée. Statistiques par fiche (messages publiés / en attente, bougies)
+sur la page de la fiche et sur le tableau de bord.
+
+**Anti-spam** (sans service externe) :
+- champ piège invisible : un robot qui le remplit reçoit un faux « merci » et rien n'est enregistré ;
+- jeton signé (HMAC) avec l'heure d'affichage : refus des envois en moins de 3 s,
+  des pages de plus de 24 h et des jetons falsifiés ;
+- refus des liens et d'une courte liste de mots interdits (`src/lib/tributes/spam.ts`) ;
+- limites par adresse IP hachée : 3 messages / 10 min et 10 / jour ; 5 bougies / 10 min
+  et 1 bougie par fiche et par heure ; plafond de 300 dépôts par fiche et par jour.
+
+> En production derrière un reverse proxy, celui-ci doit transmettre l'IP réelle
+> dans `X-Forwarded-For` (et écraser celle envoyée par le client), sinon les
+> limites par IP peuvent être contournées.
+
 ## Sécurité mise en place (Phase 1)
 
 - **Mots de passe** hachés en Argon2id ; jamais stockés ni journalisés en clair.
@@ -312,7 +342,7 @@ pris en charge : exporter la photo en JPEG (ou régler l'iPhone sur « Le plus c
 npm test
 ```
 
-80 tests couvrent :
+92 tests couvrent :
 
 - **Phase 1** : hachage et vérification des mots de passe, politique de mot de
   passe, identifiants publics, jetons et hachage d'IP, matrice des permissions,
@@ -334,6 +364,11 @@ npm test
   EXIF, redimensionnement, bombe de décompression, sortie du dossier de stockage,
   non-écrasement, requêtes partielles, ordre, légende, visibilité, corbeille et
   restauration, photo principale, règles d'accès public, absence de donnée interne.
+- **Phase 5** : jeton anti-robot (délai, expiration, falsification, autre page), liens
+  et mots interdits, validation et consentement, dépôt refusé sur fiche non publiée ou
+  fermée, mise en attente systématique des messages, bougies directes ou modérées,
+  limites par IP et par heure, modération, suppression définitive, statistiques,
+  absence de coordonnées et d'IP dans les données publiques et le journal.
 
 ## Migration PostgreSQL (plus tard)
 

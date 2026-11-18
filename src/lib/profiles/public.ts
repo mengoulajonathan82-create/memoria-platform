@@ -12,6 +12,12 @@ import { and, asc, eq } from "drizzle-orm";
 import type { Database } from "@/lib/db/client";
 import { deceasedProfiles, media } from "@/lib/db/schema";
 import { isValidPublicId } from "@/lib/security/crypto";
+import {
+  getPublicCandles,
+  listPublicCondolences,
+  type PublicCandle,
+  type PublicCondolence,
+} from "@/lib/tributes/service";
 
 export interface PublicCeremony {
   date: string | null;
@@ -50,6 +56,10 @@ export interface PublicProfile {
   showGallery: boolean;
   allowCondolences: boolean;
   allowCandles: boolean;
+  /** Messages approuvés (nom, message, date — jamais les coordonnées). null si désactivés. */
+  condolences: PublicCondolence[] | null;
+  /** Bougies approuvées. null si désactivées. */
+  candles: { count: number; recent: PublicCandle[] } | null;
 }
 
 export type PublicProfileLookup =
@@ -150,6 +160,8 @@ export async function getPublicProfile(
       showGallery: row.showGallery,
       allowCondolences: row.allowCondolences,
       allowCandles: row.allowCandles,
+      condolences: row.allowCondolences ? await listPublicCondolences(db, row.internalId) : null,
+      candles: row.allowCandles ? await getPublicCandles(db, row.internalId) : null,
     },
   };
 }

@@ -13,6 +13,7 @@ const SUCCESS_MESSAGES = {
   photo: "Photo principale mise à jour.",
   corbeille: "Média placé dans la corbeille.",
   "restaure-media": "Média restauré.",
+  modere: "Décision de modération enregistrée.",
 } as const;
 
 const ERROR_MESSAGES = {

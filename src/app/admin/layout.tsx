@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireUser } from "@/lib/auth/dal";
 import { hasPermission, ROLE_LABELS, type Permission } from "@/lib/auth/permissions";
+import { getDb } from "@/lib/db";
+import { countPending } from "@/lib/tributes/service";
 import { logoutAction } from "./actions";
 
 export const metadata: Metadata = {
@@ -20,7 +22,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin", label: "Tableau de bord", permission: "dashboard.view" },
   { href: "/admin/familles", label: "Familles", permission: "families.manage" },
   { href: "/admin/fiches", label: "Fiches défunts", permission: "profiles.manage" },
-  { href: "/admin/moderation", label: "Modération", permission: "moderation.manage", upcoming: "Phase 5" },
+  { href: "/admin/moderation", label: "Modération", permission: "moderation.manage" },
   { href: "/admin/employes", label: "Employés", permission: "users.manage" },
   { href: "/admin/parametres", label: "Paramètres", permission: "settings.manage", upcoming: "Phase 6" },
 ];
@@ -29,6 +31,9 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   // Garde serveur : toute page sous /admin exige une session valide.
   const user = await requireUser();
   const items = NAV_ITEMS.filter((item) => hasPermission(user.role, item.permission));
+  const pendingModeration = hasPermission(user.role, "moderation.manage")
+    ? await countPending(await getDb())
+    : 0;
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
@@ -71,6 +76,14 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
                     className="block rounded-md px-3 py-1.5 whitespace-nowrap hover:bg-background"
                   >
                     {item.label}
+                    {item.href === "/admin/moderation" && pendingModeration > 0 ? (
+                      <span
+                        className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-xs text-amber-800"
+                        aria-label={`${pendingModeration} en attente`}
+                      >
+                        {pendingModeration}
+                      </span>
+                    ) : null}
                   </Link>
                 )}
               </li>
