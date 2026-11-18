@@ -14,6 +14,7 @@ const SUCCESS_MESSAGES = {
   corbeille: "Média placé dans la corbeille.",
   "restaure-media": "Média restauré.",
   modere: "Décision de modération enregistrée.",
+  sauvegarde: "Sauvegarde créée.",
 } as const;
 
 const ERROR_MESSAGES = {
@@ -23,6 +24,7 @@ const ERROR_MESSAGES = {
   "statut-invalide": "Ce changement de statut n'est pas possible.",
   "droits-insuffisants": "Vous n'avez pas les droits nécessaires pour cette action.",
   "legende-invalide": "Légende invalide (300 caractères maximum).",
+  sauvegarde: "La sauvegarde a échoué. Consultez les journaux du serveur.",
 } as const;
 
 export type SuccessKey = keyof typeof SUCCESS_MESSAGES;

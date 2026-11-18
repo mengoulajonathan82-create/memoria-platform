@@ -58,8 +58,9 @@ describe("anti-spam", () => {
     expect(containsForbiddenWord("Quel ENCULÉ")).toBe(true);
     expect(containsForbiddenWord("gagnez au casino")).toBe(true);
     expect(containsForbiddenWord("Une personne unique, sans dispute")).toBe(false);
-    expect(checkContent("Marie", "Sincères condoléances")).toBe("ok");
-    expect(checkContent("Bob", "https://spam.ru")).toBe("link");
+    expect(checkContent(["Marie", "Sincères condoléances"])).toBe("ok");
+    expect(checkContent(["Bob", "https://spam.ru"])).toBe("link");
+    expect(checkContent(["Message avec motperso"], ["motperso"])).toBe("forbidden");
   });
 
   it("valide les formulaires publics", () => {

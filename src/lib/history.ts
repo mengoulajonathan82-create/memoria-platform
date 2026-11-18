@@ -27,7 +27,7 @@ function parseDetails(raw: string | null): Record<string, unknown> | null {
 
 export async function getEntityHistory(
   db: Database,
-  entityType: "family" | "profile",
+  entityType: "family" | "profile" | "user",
   entityId: string,
   limit = 50,
 ): Promise<HistoryEntry[]> {

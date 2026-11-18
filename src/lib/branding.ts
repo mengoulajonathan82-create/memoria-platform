@@ -1,7 +1,7 @@
 /**
  * Paramètres de personnalisation (nom de l'entreprise, logo, couleur, textes).
  * Stockés dans la table `settings` sous la clé `branding`.
- * L'écran d'édition arrive en Phase 6.
+ * Écran d'édition : /admin/parametres (écriture dans `src/lib/settings.ts`).
  */
 import { eq } from "drizzle-orm";
 import { z } from "zod";
@@ -12,7 +12,8 @@ export const BRANDING_SETTING_KEY = "branding";
 
 export const brandingSchema = z.object({
   companyName: z.string().trim().min(1).max(120),
-  logoPath: z.string().max(255).nullable(),
+  /** Chemin dans le stockage protégé ; servi publiquement par la route /logo. */
+  logoPath: z.string().regex(/^branding\/logo-[A-Za-z0-9]+\.png$/).nullable(),
   primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Couleur hexadécimale attendue."),
   welcomeText: z.string().max(1000),
   footerText: z.string().max(1000),

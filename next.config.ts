@@ -19,6 +19,10 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   cacheComponents: false,
   poweredByHeader: false,
+  experimental: {
+    // Formulaires avec fichier (logo : 2 Mo max). Les médias passent par /api/admin/medias.
+    serverActions: { bodySizeLimit: "3mb" },
+  },
   serverExternalPackages: ["@libsql/client", "libsql", "@node-rs/argon2", "sharp"],
   turbopack: {
     rules: {

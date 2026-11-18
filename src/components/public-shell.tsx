@@ -12,8 +12,12 @@ export function PublicShell({ branding, children }: { branding: Branding; childr
   return (
     <div style={style} className="flex min-h-full flex-1 flex-col">
       <header className="border-b border-border bg-surface/70">
-        <div className="mx-auto max-w-2xl px-5 py-3 text-center text-sm tracking-wide text-muted">
-          {branding.companyName}
+        <div className="mx-auto flex max-w-2xl flex-col items-center gap-1 px-5 py-3 text-center text-sm tracking-wide text-muted">
+          {branding.logoPath ? (
+            // eslint-disable-next-line @next/next/no-img-element -- logo servi par une route dédiée
+            <img src="/logo" alt={branding.companyName} className="max-h-12 w-auto" />
+          ) : null}
+          <span className={branding.logoPath ? "sr-only" : undefined}>{branding.companyName}</span>
         </div>
       </header>
       <div className="flex-1">{children}</div>

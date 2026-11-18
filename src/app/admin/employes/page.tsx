@@ -1,43 +1,26 @@
 import type { Metadata } from "next";
-import { asc } from "drizzle-orm";
+import Link from "next/link";
+import { Card, FlashBanner, formatDateTime, PageHeader, StatusBadge } from "@/components/ui";
 import { requirePermission } from "@/lib/auth/dal";
 import { ROLE_LABELS } from "@/lib/auth/permissions";
-import { getDb, schema } from "@/lib/db";
+import { getDb } from "@/lib/db";
+import { readFlash } from "@/lib/flash";
+import { listStaff } from "@/lib/users/service";
+import { createStaffAction } from "./actions";
+import { CreateStaffForm } from "./staff-forms";
 
 export const metadata: Metadata = { title: "Employés" };
 
-const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
-  dateStyle: "short",
-  timeStyle: "short",
-});
-
-/**
- * Liste des comptes (lecture seule en Phase 1, réservée aux administrateurs).
- * Création / désactivation : Phase 6.
- */
-export default async function EmployeesPage() {
-  await requirePermission("users.manage");
-  const db = await getDb();
-  const accounts = await db
-    .select({
-      id: schema.users.id,
-      name: schema.users.name,
-      email: schema.users.email,
-      role: schema.users.role,
-      isActive: schema.users.isActive,
-      lastLoginAt: schema.users.lastLoginAt,
-    })
-    .from(schema.users)
-    .orderBy(asc(schema.users.name));
+/** Comptes du personnel (administrateurs uniquement). */
+export default async function EmployeesPage(props: PageProps<"/admin/employes">) {
+  const user = await requirePermission("users.manage");
+  const [accounts, searchParams] = await Promise.all([listStaff(await getDb()), props.searchParams]);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-serif text-2xl">Comptes du personnel</h1>
-        <p className="mt-1 text-sm text-muted">
-          Lecture seule pour le moment — la création et la désactivation des comptes arrivent en Phase 6.
-        </p>
-      </div>
+    <div className="space-y-8">
+      <PageHeader title="Comptes du personnel" description="Créer, modifier, désactiver ou supprimer des comptes." />
+      <FlashBanner {...readFlash(searchParams)} />
+
       <div className="overflow-x-auto rounded-lg border border-border bg-surface">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-border text-muted">
@@ -50,25 +33,33 @@ export default async function EmployeesPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {accounts.map((account) => (
-              <tr key={account.id}>
-                <td className="px-4 py-3">{account.name}</td>
-                <td className="px-4 py-3">{account.email}</td>
-                <td className="px-4 py-3">{ROLE_LABELS[account.role]}</td>
+            {accounts.map((a) => (
+              <tr key={a.id} className="hover:bg-background">
                 <td className="px-4 py-3">
-                  {account.isActive ? (
-                    <span className="text-success">Actif</span>
-                  ) : (
-                    <span className="text-danger">Désactivé</span>
-                  )}
+                  <Link href={`/admin/employes/${a.id}`} className="font-medium underline-offset-4 hover:underline">
+                    {a.name}
+                  </Link>
+                  {a.id === user.id ? <span className="ml-2 text-xs text-muted">(vous)</span> : null}
                 </td>
-                <td className="px-4 py-3 text-muted tabular-nums">
-                  {account.lastLoginAt ? dateFormatter.format(account.lastLoginAt) : "—"}
+                <td className="px-4 py-3">{a.email}</td>
+                <td className="px-4 py-3">{ROLE_LABELS[a.role]}</td>
+                <td className="px-4 py-3">
+                  <StatusBadge status={a.isActive ? "active" : "deleted"} label={a.isActive ? "Actif" : "Désactivé"} />
                 </td>
+                <td className="px-4 py-3 text-muted tabular-nums">{a.lastLoginAt ? formatDateTime(a.lastLoginAt) : "—"}</td>
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="max-w-2xl">
+        <Card title="Nouveau compte">
+          <p className="mb-4 text-sm text-muted">
+            Un mot de passe provisoire est généré et affiché une seule fois. Aucun e-mail n&apos;est envoyé.
+          </p>
+          <CreateStaffForm action={createStaffAction} />
+        </Card>
       </div>
     </div>
   );

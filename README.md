@@ -18,7 +18,7 @@ des pages commémoratives accessibles par QR code permanent.
 | 3 — QR codes et page publique | URL stable, QR PNG/SVG, impression, page publique, dépublication, mentions légales | ✅ Terminée |
 | 4 — Médias | Téléversement sécurisé, optimisation, photo principale, galerie, légendes, ordre, corbeille | ✅ Terminée |
 | 5 — Condoléances et bougies | Formulaires publics, file de modération, anti-spam, statistiques | ✅ Terminée |
-| 6 — Administration avancée | Employés, paramètres, export CSV, sauvegardes | À venir |
+| 6 — Administration avancée | Employés, mot de passe, journal, paramètres, export CSV, sauvegardes, tests de parcours | ✅ Terminée |
 
 ## Prérequis
 
@@ -77,6 +77,9 @@ Connexion : <http://localhost:3000/connexion>
 | `npm run db:migrate` | Applique les migrations |
 | `npm run db:seed` | Crée les comptes de test |
 | `npm run db:seed:demo` | Crée les données de démonstration |
+| `npm run test:e2e` | Tests de parcours dans Chrome (base de test dédiée `data/e2e.db`) |
+| `npm run backup` | Crée une sauvegarde (base + médias) |
+| `npm run restore` | Liste les sauvegardes ; `npm run restore -- NOM --confirm` restaure (serveur arrêté) |
 | `npm run start:lan` | Serveur de production accessible depuis le réseau local (test sur téléphone) |
 | `npm run db:studio` | Explorateur visuel de la base (Drizzle Studio) |
 
@@ -93,6 +96,7 @@ Voir [`.env.example`](.env.example). Le fichier `.env` n'est **jamais** versionn
 | `SESSION_TTL_HOURS` | Durée de vie d'une session du back-office (8 h par défaut) |
 | `IP_HASH_SECRET` | Secret pour hacher les adresses IP (≥ 32 caractères) |
 | `SEED_*` | Nom, e-mail et mot de passe des comptes de test |
+| `BACKUP_DIR` | Dossier des sauvegardes (`./backups`, non versionné, contient des données personnelles) |
 | `MEDIA_STORAGE_DIR` | Dossier des médias téléversés (`./uploads`, hors de `public/`, non versionné) |
 
 ## Stack technique
@@ -137,7 +141,11 @@ src/
     mentions-legales/    texte provisoire
     confidentialite/     texte provisoire
       moderation/        file de modération (condoléances et bougies)
-      employes/          liste des comptes (administrateur uniquement)
+      employes/          comptes du personnel (création, rôle, désactivation, mot de passe provisoire)
+      journal/           journal d'activité filtrable
+      parametres/        identité (nom, logo, couleur, textes) et mots interdits
+      donnees/           export CSV et sauvegardes
+      profil/            changement de son mot de passe
       acces-refuse/      page « accès refusé »
       actions.ts         déconnexion
   lib/
@@ -160,11 +168,18 @@ src/
     profiles/public.ts   lecture publique en liste blanche
     qr.ts                URL publique et génération des QR codes
     tributes/            condoléances et bougies : dépôt, anti-spam, modération, statistiques
+    users/service.ts     comptes et garde-fous (dernier administrateur, sessions)
+    settings.ts          paramètres (identité, logo, mots interdits, contraste)
+    csv.ts, exports.ts   export CSV non sensible (anti-injection de formules)
+    backup.ts            sauvegarde / vérification / restauration
+    activity-query.ts    consultation du journal
     media/               détection du type réel, optimisation (sharp), stockage protégé, diffusion, service
     activity-log.ts      journal d'activité
     dashboard.ts         indicateurs du tableau de bord
     branding.ts          paramètres de personnalisation (lecture)
 tests/                   tests Vitest (+ base SQLite en mémoire)
+e2e/                     tests de parcours Playwright
+scripts/backup.ts, restore.ts   sauvegarde et restauration en ligne de commande
 ```
 
 ## Modèle de données
@@ -318,6 +333,56 @@ sur la page de la fiche et sur le tableau de bord.
 > dans `X-Forwarded-For` (et écraser celle envoyée par le client), sinon les
 > limites par IP peuvent être contournées.
 
+## Administration avancée (Phase 6)
+
+| Écran | Qui | Contenu |
+|---|---|---|
+| **Employés** | admin | créer un compte (mot de passe provisoire affiché **une seule fois**, aucun e-mail envoyé), modifier nom et rôle, réinitialiser le mot de passe, désactiver / réactiver, supprimer ; historique du compte |
+| **Mon profil** | tous | changer son mot de passe (les autres sessions sont fermées) |
+| **Journal** | admin | toute l'activité, filtrable par utilisateur, catégorie et période |
+| **Paramètres** | admin | nom de l'entreprise, logo, couleur principale (contraste vérifié), texte d'accueil, pied de page ; liste des mots interdits |
+| **Données** | admin | export CSV, création et liste des sauvegardes |
+
+**Garde-fous des comptes** : impossible de se désactiver, se supprimer ou se
+retirer le rôle d'administrateur ; il reste toujours au moins un administrateur
+actif ; désactivation et réinitialisation ferment immédiatement les sessions.
+La suppression d'un compte conserve ses fiches et le journal (auteur « inconnu »).
+
+**Export CSV** (Excel, séparateur `;`) : fiches avec nom, dates, statut, adresse
+publique et compteurs. Exclut familles, notes internes, contenu des messages,
+coordonnées et identifiants internes. Les cellules commençant par `= + - @`
+sont neutralisées (injection de formules). Chaque export est journalisé.
+
+**Sauvegardes** : bouton « Créer une sauvegarde » ou `npm run backup` → dossier
+`backups/sauvegarde-AAAAMMJJ-HHMMSS/` (base cohérente via `VACUUM INTO` + médias +
+manifeste). **Restauration en ligne de commande uniquement, serveur arrêté** :
+
+```bash
+npm run restore                                   # liste
+npm run restore -- sauvegarde-20261118-085054 --confirm
+npm run db:migrate                                # au cas où la sauvegarde serait plus ancienne
+```
+
+La restauration vérifie l'intégrité de la sauvegarde, crée d'abord une
+sauvegarde de sécurité de l'état actuel (`…-avant-restauration`) et revient en
+arrière en cas d'échec. Les sauvegardes contiennent des données personnelles :
+à conserver chiffrées et à copier régulièrement hors de la machine.
+
+## Tests de parcours (Playwright)
+
+```bash
+npm run test:e2e
+```
+
+Construit l'application, recrée une base de test **dédiée** (`data/e2e.db`, jamais
+la base de développement), démarre le serveur sur le port 3100 et rejoue 7
+parcours dans le Chrome installé sur la machine : accès refusé sans connexion,
+erreur de connexion générique, création famille → fiche → publication → QR code,
+visite mobile + message + bougie (sans aucune donnée privée dans le HTML),
+modération puis dépublication immédiate, création d'un employé avec mot de passe
+provisoire, puis vérification qu'il ne peut accéder ni aux comptes, ni au journal,
+ni aux paramètres, ni à l'export.
+
 ## Sécurité mise en place (Phase 1)
 
 - **Mots de passe** hachés en Argon2id ; jamais stockés ni journalisés en clair.
@@ -342,7 +407,7 @@ sur la page de la fiche et sur le tableau de bord.
 npm test
 ```
 
-92 tests couvrent :
+109 tests unitaires et d'intégration (`npm test`) couvrent :
 
 - **Phase 1** : hachage et vérification des mots de passe, politique de mot de
   passe, identifiants publics, jetons et hachage d'IP, matrice des permissions,
@@ -369,6 +434,14 @@ npm test
   fermée, mise en attente systématique des messages, bougies directes ou modérées,
   limites par IP et par heure, modération, suppression définitive, statistiques,
   absence de coordonnées et d'IP dans les données publiques et le journal.
+- **Phase 6** : mots de passe provisoires, création / réinitialisation / désactivation
+  (sessions fermées), garde-fous du dernier administrateur, suppression conservant les
+  fiches, changement de son mot de passe, journal filtré, CSV (échappement, injection de
+  formules, données exclues), contraste, logo (ré-encodage, remplacement, refus d'un faux
+  fichier), mots interdits configurables, sauvegarde + restauration complète, refus d'une
+  sauvegarde corrompue sans toucher aux données, noms de sauvegarde dangereux.
+
+Plus 7 tests de parcours Playwright (voir ci-dessus).
 
 ## Migration PostgreSQL (plus tard)
 
@@ -377,6 +450,15 @@ par l'application, énumérations en texte). Pour migrer : passer `dialect` à
 `postgresql` dans `drizzle.config.ts`, remplacer `sqliteTable` par `pgTable`
 (et les types de colonnes correspondants) dans le schéma, utiliser le pilote
 `drizzle-orm/node-postgres`, puis régénérer les migrations.
+
+## Fonctionnalités terminées et restantes
+
+Toutes les phases 1 à 6 du plan sont terminées. Restent hors périmètre de la
+première version (à décider) : espace famille avec connexion, envoi d'e-mails réels
+(ex. alerte de nouveau message, envoi du mot de passe provisoire), stockage cloud des
+médias, compression vidéo, prise en charge du format HEIC, multilingue, déploiement
+en ligne (hébergement, nom de domaine, HTTPS, reverse proxy), migration PostgreSQL,
+textes juridiques définitifs, politique de conservation des données.
 
 ## Décisions à valider
 

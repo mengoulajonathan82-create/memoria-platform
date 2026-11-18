@@ -58,8 +58,8 @@ export function containsLink(text: string): boolean {
 }
 
 /**
- * Liste volontairement courte et prudente (insultes et termes de spam
- * courants). Elle sera rendue modifiable dans les paramètres (Phase 6).
+ * Liste par défaut, volontairement courte et prudente (insultes et termes de
+ * spam courants). Modifiable dans Paramètres → Modération.
  */
 export const FORBIDDEN_WORDS = [
   "connard",
@@ -85,9 +85,12 @@ export function containsForbiddenWord(text: string, words: readonly string[] = F
 
 export type ContentCheck = "ok" | "link" | "forbidden";
 
-export function checkContent(...fields: (string | null | undefined)[]): ContentCheck {
+export function checkContent(
+  fields: (string | null | undefined)[],
+  words: readonly string[] = FORBIDDEN_WORDS,
+): ContentCheck {
   const text = fields.filter(Boolean).join(" \n ");
   if (containsLink(text)) return "link";
-  if (containsForbiddenWord(text)) return "forbidden";
+  if (containsForbiddenWord(text, words)) return "forbidden";
   return "ok";
 }

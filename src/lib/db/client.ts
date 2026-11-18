@@ -9,7 +9,7 @@ import { createClient, type Client } from "@libsql/client";
 import { drizzle, type LibSQLDatabase } from "drizzle-orm/libsql";
 import * as schema from "./schema";
 
-export type Database = LibSQLDatabase<typeof schema>;
+export type Database = LibSQLDatabase<typeof schema> & { $client: Client };
 
 export interface DatabaseConnection {
   db: Database;

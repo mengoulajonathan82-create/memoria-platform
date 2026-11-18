@@ -47,6 +47,11 @@ next-env.d.ts
 *.db-wal
 *.db-shm
 /uploads/
+/backups/
 
 # env : seul .env.example est versionné
 !.env.example
+
+# Playwright
+/test-results/
+/playwright-report/

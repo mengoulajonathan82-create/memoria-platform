@@ -12,6 +12,13 @@ export type ActivityAction =
   | "user.create"
   | "user.update"
   | "user.disable"
+  | "user.enable"
+  | "user.delete"
+  | "user.password_reset"
+  | "user.password_change"
+  | "settings.update"
+  | "export.csv"
+  | "backup.create"
   | "family.create"
   | "family.update"
   | "family.delete"
@@ -36,6 +43,13 @@ export const ACTIVITY_LABELS: Record<ActivityAction, string> = {
   "user.create": "Création d'un compte",
   "user.update": "Modification d'un compte",
   "user.disable": "Désactivation d'un compte",
+  "user.enable": "Réactivation d'un compte",
+  "user.delete": "Suppression d'un compte",
+  "user.password_reset": "Réinitialisation d'un mot de passe",
+  "user.password_change": "Changement de mot de passe",
+  "settings.update": "Modification des paramètres",
+  "export.csv": "Export CSV",
+  "backup.create": "Création d'une sauvegarde",
   "family.create": "Création d'une famille",
   "family.update": "Modification d'une famille",
   "family.delete": "Suppression d'une famille",

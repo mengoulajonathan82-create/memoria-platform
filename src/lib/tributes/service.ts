@@ -20,6 +20,7 @@ import {
 } from "@/lib/db/schema";
 import { buildPagination, DEFAULT_PAGE_SIZE, type Pagination } from "@/lib/query-utils";
 import type { CandleInput, CondolenceInput, TributeKind } from "@/lib/validation/tribute";
+import { getModerationSettings } from "@/lib/settings";
 import { checkContent } from "./spam";
 
 const MINUTE = 60 * 1000;
@@ -85,7 +86,8 @@ export async function submitCondolence(
     return { ok: false, error: "Les messages ne sont pas ouverts sur cette page." };
   }
 
-  const content = checkContent(input.authorName, input.message);
+  const { forbiddenWords } = await getModerationSettings(db);
+  const content = checkContent([input.authorName, input.message], forbiddenWords);
   if (content !== "ok") return { ok: false, error: CONTENT_ERRORS[content] };
 
   const ip = ipHash ?? "inconnue";
@@ -127,7 +129,8 @@ export async function submitCandle(
     return { ok: false, error: "Les bougies ne sont pas ouvertes sur cette page." };
   }
 
-  const content = checkContent(input.firstName, input.message);
+  const { forbiddenWords } = await getModerationSettings(db);
+  const content = checkContent([input.firstName, input.message], forbiddenWords);
   if (content !== "ok") return { ok: false, error: CONTENT_ERRORS[content] };
 
   const ip = ipHash ?? "inconnue";

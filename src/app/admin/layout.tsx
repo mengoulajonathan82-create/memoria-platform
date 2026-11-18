@@ -24,7 +24,10 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/fiches", label: "Fiches défunts", permission: "profiles.manage" },
   { href: "/admin/moderation", label: "Modération", permission: "moderation.manage" },
   { href: "/admin/employes", label: "Employés", permission: "users.manage" },
-  { href: "/admin/parametres", label: "Paramètres", permission: "settings.manage", upcoming: "Phase 6" },
+  { href: "/admin/journal", label: "Journal", permission: "activity.view" },
+  { href: "/admin/parametres", label: "Paramètres", permission: "settings.manage" },
+  { href: "/admin/donnees", label: "Données", permission: "backup.manage" },
+  { href: "/admin/profil", label: "Mon profil", permission: "dashboard.view" },
 ];
 
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
